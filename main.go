@@ -21,10 +21,10 @@ const (
 	postType = "application/octet-stream"
 	tmpFolder = "tmp"
 	getFromTemplate = "https://bee-%d.gateway.staging.ethswarm.org/bytes/%s"
-	postSize = 15 * 1000 * 1000
-	batchSize =  10
+	postSize = 10
+	batchSize =  5000
 	getTestTimoutSecs = 100
-	sleepBetweenBatchMs = 10000
+	sleepBetweenBatchMs = 100
 	maxNode = 19 //presuming they start at 0
 )
 
