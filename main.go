@@ -16,16 +16,16 @@ import (
 )
 
 const (
-	postTo = "http://localhost:1633/bytes"
+	postTo = "http://localhost:1733/bytes"
 	getTagStatusTemplate = "http://localhost:1733/tags/%s"
 	postType = "application/octet-stream"
 	tmpFolder = "tmp"
-	getFromTemplate = "https://bee-%d.gateway.ethswarm.org/bytes/%s"
-	postSize = 10
-	batchSize =  1000
+	getFromTemplate = "https://bee-%d.gateway.staging.ethswarm.org/bytes/%s"
+	postSize = 1000
+	batchSize =  100
 	getTestTimoutSecs = 100
-	sleepBetweenBatchMs = 100
-	maxNode = 69 //presuming they start at 0
+	sleepBetweenBatchMs = 1000
+	maxNode = 19 //presuming they start at 0
 )
 
 func postTest(size int64) string {
