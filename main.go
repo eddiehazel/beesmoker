@@ -14,18 +14,35 @@ import (
 	"path/filepath"
 )
 
+// const (
+// 	concurrentUploads = true
+// 	postTo = "http://localhost:1733/bytes"
+// 	getTagStatusTemplate = "http://localhost:1733/tags/%s"
+// 	postType = "application/octet-stream"
+// 	tmpFolder = "tmp"
+// 	getFromTemplate = "https://bee-%d.gateway.staging.ethswarm.org/bytes/%s"
+// 	postSize = 10
+// 	batchSize =  1000
+// 	getTestTimoutSecs = 100
+// 	sleepBetweenBatchMs = 100
+//  sleepBetweenRetryMs = 100
+// 	maxNode = 19 //presuming they start at 0
+// )
+
 const (
-	concurrentUploads = false
-	postTo = "http://localhost:1733/bytes"
-	getTagStatusTemplate = "http://localhost:1733/tags/%s"
+	concurrentUploads = true
+	postTo = "http://localhost:1633/bytes"
+	getTagStatusTemplate = "http://localhost:1633/tags/%s"
 	postType = "application/octet-stream"
 	tmpFolder = "tmp"
-	getFromTemplate = "https://bee-%d.gateway.staging.ethswarm.org/bytes/%s"
-	postSize = 10 * 1000 * 1000
-	batchSize =  100
+	getFromTemplate = "https://bee-%d.gateway.ethswarm.org/bytes/%s"
+	postSize = 10
+	batchSize =  10
 	getTestTimoutSecs = 100
 	sleepBetweenBatchMs = 100
-	maxNode = 19 //presuming they start at 0
+	sleepBetweenRetryMs = 1000
+	maxRetryAttempts = 3
+	maxNode = 70 //presuming they start at 0
 )
 
 func postTest(size int64) string {
@@ -174,11 +191,14 @@ func testRun(resultsChannel chan []TestResult, retryChannel chan TestResult, syn
         }
     }
 
-    fmt.Println("success", successful, ref)
-
-    syncDoneChannel <- true
+    if concurrentUploads == false {
+    	syncDoneChannel <- true
+	}
 
     resultsChannel <- results
+
+    fmt.Println("success", successful, ref)
+
 }
 
 func captureResults(resultsChannel chan []TestResult, retryChannel chan TestResult){
@@ -196,11 +216,26 @@ func captureResults(resultsChannel chan []TestResult, retryChannel chan TestResu
     fmt.Println("cr complete")
 }
 
-func doRetry(ref TestResult) bool {
+func doRetry(ref TestResult, maxRetryAttemptsExceededChannel chan TestResult, attempt int) {
+	if attempt >= maxRetryAttempts  {
+		fmt.Println("max retry attempts reached, could not retrieve", attempt, ref.Reference, ref.Node)
+		maxRetryAttemptsExceededChannel <- ref
+
+		return
+	}
 	fmt.Println(ref.Reference, ref.Node, "Trying again... ")
-	o, _ := getTest(ref.Reference, ref.Node)
-	fmt.Println(ref.Reference, ref.Node, o)
-	return o
+	o, ret := getTest(ref.Reference, ref.Node)
+	fmt.Println(ret)
+	if o == false {
+		nextAttempt := attempt + 1
+		timeBeforeRetry := time.Duration( sleepBetweenRetryMs * float64(nextAttempt) ) * time.Millisecond
+		fmt.Println("retry failed", nextAttempt, timeBeforeRetry, ref.Reference, ref.Node)
+		time.Sleep(timeBeforeRetry)
+		doRetry(ref, maxRetryAttemptsExceededChannel, nextAttempt)
+	}else{
+		fmt.Println("retry successful", ref.Reference, ref.Node)
+	}
+	// return
 }
 
 func captureRetries(refsToRetry *[]TestResult, retryChannel chan TestResult){
@@ -241,7 +276,6 @@ func main(){
 		}
 	}
 
-
 	var refsToRetry []TestResult
 	refsToRetryP := &refsToRetry
 	go captureRetries(refsToRetryP, retryChannel)
@@ -249,18 +283,21 @@ func main(){
 	captureResults(resultsChannel, retryChannel)
 
 	fmt.Println("waiting to start retries", len(refsToRetry))
-	time.Sleep(10 * time.Second)
 
-	var stillNotWorking []TestResult
+	time.Sleep(1 * time.Second)
+
+
+	maxRetryAttemptsExceededChannel := make(chan TestResult)
 
 	for _, ref := range refsToRetry {
-		o := doRetry(ref)
-		if o == false {
-			stillNotWorking = append(stillNotWorking, ref)
-		}
+		go doRetry(ref, maxRetryAttemptsExceededChannel, 0)
 	}
 
-	fmt.Println("stillNotWorking", len(stillNotWorking))
-	fmt.Println(stillNotWorking)
+	var refsFailed []TestResult
+
+    for ref := range maxRetryAttemptsExceededChannel {
+		refsFailed = append(refsFailed, ref)
+		fmt.Println(len(refsFailed),refsFailed)
+	}
 
 }
