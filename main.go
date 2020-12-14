@@ -12,7 +12,6 @@ import (
 	"encoding/json"
 	"time"
 	"path/filepath"
-	"sync"
 )
 
 const (
@@ -22,10 +21,10 @@ const (
 	postType = "application/octet-stream"
 	tmpFolder = "tmp"
 	getFromTemplate = "https://bee-%d.gateway.staging.ethswarm.org/bytes/%s"
-	postSize = 1000
+	postSize = 10*1000*1000
 	batchSize =  100
 	getTestTimoutSecs = 100
-	sleepBetweenBatchMs = 1000
+	sleepBetweenBatchMs = 100
 	maxNode = 19 //presuming they start at 0
 )
 
@@ -80,16 +79,14 @@ func postTest(size int64) string {
 		var r TagResponse
 		json.Unmarshal(body, &r)
 
-		time.Sleep(2 * time.Second)
-
 		if r.Synced >= r.Total {
 			fmt.Println("synced", r)
 			synced = true
 		}
-	}
 
-	//just assume this is enough time for network to sync for now
-	time.Sleep(1 * time.Second)
+		time.Sleep(2 * time.Second)
+
+	}
 
 	//save file for later investigations
     ioutil.WriteFile(filepath.Join(tmpFolder, r.Reference), buf.Bytes(), 0777)
@@ -150,7 +147,7 @@ func testRun(resultsChannel chan []TestResult, retryChannel chan TestResult) {
 
 	var results []TestResult
 
-	resultChannel := make(chan TestResult) 
+	resultChannel := make(chan TestResult)
 
 	for i := 0; i <= maxNode; i++ {
 	    go func(i int) {
@@ -176,8 +173,6 @@ func testRun(resultsChannel chan []TestResult, retryChannel chan TestResult) {
             break
         }
     }
-
-	// sort.Slice(results, func(i, j int) bool { return results[i].Node < results[j].Node })
 
     fmt.Println("success", successful, ref)
 
@@ -206,13 +201,11 @@ func doRetry(ref TestResult) bool {
 	return o
 }
 
-func captureRetries(retMutex *sync.Mutex, refsToRetry *[]TestResult, retryChannel chan TestResult){
+func captureRetries(refsToRetry *[]TestResult, retryChannel chan TestResult){
 	for {
 		ret := <-retryChannel
 		fmt.Println(ret)
-		// retMutex.Lock()
 		*refsToRetry = append(*refsToRetry, ret)
-		// retMutex.Unlock()
 	}
 }
 
@@ -236,9 +229,7 @@ func main(){
 
 
 	for i := 0; i <= batchSize - 1; i++ {
-		time.Sleep(sleepBetweenBatchMs * time.Millisecond)
 		fmt.Println(i + 1, "/", batchSize)
-		go testRun(resultsChannel, retryChannel)
 		if concurrency == true {
 			go testRun(resultsChannel, retryChannel)
 		}else{
@@ -248,10 +239,9 @@ func main(){
 	}
 
 
-	var retMutex *sync.Mutex
 	var refsToRetry []TestResult
 	refsToRetryP := &refsToRetry
-	go captureRetries(retMutex, refsToRetryP, retryChannel)
+	go captureRetries(refsToRetryP, retryChannel)
 
 	captureResults(resultsChannel, retryChannel)
 
