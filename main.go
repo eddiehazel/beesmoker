@@ -15,18 +15,20 @@ import (
 )
 
 // const (
-// 	concurrentUploads = true
+// 	concurrentUploads = true //as long as the pusher keeps up with the posts, it's fine and much quicker to do this, for bigger uploads, use non-concurrent uploads ;)
 // 	postTo = "http://localhost:1733/bytes"
 // 	getTagStatusTemplate = "http://localhost:1733/tags/%s"
 // 	postType = "application/octet-stream"
 // 	tmpFolder = "tmp"
 // 	getFromTemplate = "https://bee-%d.gateway.staging.ethswarm.org/bytes/%s"
+// 	maxNode = 19 //presuming they start at 0
+
 // 	postSize = 10
-// 	batchSize =  1000
+// 	batchSize =  5000
 // 	getTestTimoutSecs = 100
 // 	sleepBetweenBatchMs = 100
-//  sleepBetweenRetryMs = 100
-// 	maxNode = 19 //presuming they start at 0
+// 	sleepBetweenRetryMs = 5000
+// 	maxRetryAttempts = 3
 // )
 
 const (
@@ -36,13 +38,14 @@ const (
 	postType = "application/octet-stream"
 	tmpFolder = "tmp"
 	getFromTemplate = "https://bee-%d.gateway.ethswarm.org/bytes/%s"
+	maxNode = 69 //presuming they start at 0
+
 	postSize = 10
-	batchSize =  10
+	batchSize =  5000
 	getTestTimoutSecs = 100
-	sleepBetweenBatchMs = 100
-	sleepBetweenRetryMs = 1000
+	sleepBetweenBatchMs = 300
+	sleepBetweenRetryMs = 5000
 	maxRetryAttempts = 3
-	maxNode = 70 //presuming they start at 0
 )
 
 func postTest(size int64) string {
@@ -68,7 +71,7 @@ func postTest(size int64) string {
 	var r Response
 	json.Unmarshal(body, &r)
 
-	fmt.Println("posted", r.Reference)
+	// fmt.Println("posted", r.Reference)
 
 
 	synced := false
@@ -97,7 +100,7 @@ func postTest(size int64) string {
 		json.Unmarshal(body, &r)
 
 		if r.Synced >= r.Total {
-			fmt.Println("synced", r)
+			// fmt.Println("synced", r)
 			synced = true
 		}
 
@@ -195,10 +198,10 @@ func testRun(resultsChannel chan []TestResult, retryChannel chan TestResult, syn
     	syncDoneChannel <- true
 	}
 
+
+    // fmt.Println("success", successful, ref)
+
     resultsChannel <- results
-
-    fmt.Println("success", successful, ref)
-
 }
 
 func captureResults(resultsChannel chan []TestResult, retryChannel chan TestResult){
@@ -224,8 +227,8 @@ func doRetry(ref TestResult, maxRetryAttemptsExceededChannel chan TestResult, at
 		return
 	}
 	fmt.Println(ref.Reference, ref.Node, "Trying again... ")
-	o, ret := getTest(ref.Reference, ref.Node)
-	fmt.Println(ret)
+	o, _ := getTest(ref.Reference, ref.Node)
+	// fmt.Println(ret)
 	if o == false {
 		nextAttempt := attempt + 1
 		timeBeforeRetry := time.Duration( sleepBetweenRetryMs * float64(nextAttempt) ) * time.Millisecond
@@ -241,7 +244,7 @@ func doRetry(ref TestResult, maxRetryAttemptsExceededChannel chan TestResult, at
 func captureRetries(refsToRetry *[]TestResult, retryChannel chan TestResult){
 	for {
 		ret := <-retryChannel
-		fmt.Println(ret)
+		// fmt.Println(ret)
 		*refsToRetry = append(*refsToRetry, ret)
 	}
 }
@@ -264,12 +267,13 @@ func main(){
 	resultsChannel := make(chan []TestResult)  
 	retryChannel := make(chan TestResult)  
 
-
 	for i := 0; i <= batchSize - 1; i++ {
 		fmt.Println(i + 1, "/", batchSize)
+
 		syncDoneChannel := make(chan bool)
 		go testRun(resultsChannel, retryChannel, syncDoneChannel)
 		if concurrentUploads == false {
+			time.Sleep(sleepBetweenBatchMs * time.Millisecond)
 			<- syncDoneChannel
 		}else{
 			time.Sleep(sleepBetweenBatchMs * time.Millisecond)			
@@ -280,17 +284,18 @@ func main(){
 	refsToRetryP := &refsToRetry
 	go captureRetries(refsToRetryP, retryChannel)
 
+	//complete the whole run before starting retries
 	captureResults(resultsChannel, retryChannel)
 
 	fmt.Println("waiting to start retries", len(refsToRetry))
 
 	time.Sleep(1 * time.Second)
 
-
 	maxRetryAttemptsExceededChannel := make(chan TestResult)
 
 	for _, ref := range refsToRetry {
 		go doRetry(ref, maxRetryAttemptsExceededChannel, 0)
+		time.Sleep(sleepBetweenBatchMs * time.Millisecond)	
 	}
 
 	var refsFailed []TestResult
