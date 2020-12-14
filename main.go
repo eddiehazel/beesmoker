@@ -16,6 +16,7 @@ import (
 )
 
 const (
+	concurrency = false
 	postTo = "http://localhost:1733/bytes"
 	getTagStatusTemplate = "http://localhost:1733/tags/%s"
 	postType = "application/octet-stream"
@@ -238,6 +239,12 @@ func main(){
 		time.Sleep(sleepBetweenBatchMs * time.Millisecond)
 		fmt.Println(i + 1, "/", batchSize)
 		go testRun(resultsChannel, retryChannel)
+		if concurrency == true {
+			go testRun(resultsChannel, retryChannel)
+		}else{
+			testRun(resultsChannel, retryChannel)
+		}
+		time.Sleep(sleepBetweenBatchMs * time.Millisecond)
 	}
 
 
