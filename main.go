@@ -15,13 +15,13 @@ import (
 )
 
 const (
-	concurrency = false
+	concurrentUploads = false
 	postTo = "http://localhost:1733/bytes"
 	getTagStatusTemplate = "http://localhost:1733/tags/%s"
 	postType = "application/octet-stream"
 	tmpFolder = "tmp"
 	getFromTemplate = "https://bee-%d.gateway.staging.ethswarm.org/bytes/%s"
-	postSize = 10*1000*1000
+	postSize = 10 * 1000 * 1000
 	batchSize =  100
 	getTestTimoutSecs = 100
 	sleepBetweenBatchMs = 100
@@ -142,7 +142,7 @@ func arrayContains(r []int, s int) bool{
     return false
 }
 
-func testRun(resultsChannel chan []TestResult, retryChannel chan TestResult) {
+func testRun(resultsChannel chan []TestResult, retryChannel chan TestResult, syncDoneChannel chan bool) {
 	ref := postTest(postSize)
 
 	var results []TestResult
@@ -175,6 +175,8 @@ func testRun(resultsChannel chan []TestResult, retryChannel chan TestResult) {
     }
 
     fmt.Println("success", successful, ref)
+
+    syncDoneChannel <- true
 
     resultsChannel <- results
 }
@@ -230,12 +232,13 @@ func main(){
 
 	for i := 0; i <= batchSize - 1; i++ {
 		fmt.Println(i + 1, "/", batchSize)
-		if concurrency == true {
-			go testRun(resultsChannel, retryChannel)
+		syncDoneChannel := make(chan bool)
+		go testRun(resultsChannel, retryChannel, syncDoneChannel)
+		if concurrentUploads == false {
+			<- syncDoneChannel
 		}else{
-			testRun(resultsChannel, retryChannel)
+			time.Sleep(sleepBetweenBatchMs * time.Millisecond)			
 		}
-		time.Sleep(sleepBetweenBatchMs * time.Millisecond)
 	}
 
 
