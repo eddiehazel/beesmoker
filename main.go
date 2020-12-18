@@ -40,8 +40,8 @@ const (
 	getFromTemplate = "https://bee-%d.gateway.ethswarm.org/bytes/%s"
 	maxNode = 69 //presuming they start at 0
 
-	postSize = 10
-	batchSize =  10000
+	postSize = 1000
+	batchSize =  5000
 	getTestTimoutSecs = 100
 	sleepBetweenBatchMs = 300
 	sleepBetweenRetryMs = 5000
@@ -71,7 +71,7 @@ func postTest(size int64) string {
 	var r Response
 	json.Unmarshal(body, &r)
 
-	// fmt.Println("posted", r.Reference)
+	fmt.Println("posted", r.Reference)
 
 
 	synced := false
