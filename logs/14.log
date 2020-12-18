@@ -1,0 +1,23 @@
+postTo http://localhost:1633/bytes
+postType application/octet-stream
+tmpFolder tmp
+getFromTemplate https://bee-%d.gateway.ethswarm.org/bytes/%s
+postSize 100000000
+batchSize 4
+getTestTimoutSecs 100
+sleepBetweenBatchMs 300
+maxNode 69
+1 / 4
+posted 14c838bd43a9bc6ff72cc049629b7951dd17b36fb9a216a56c4057ec43a170d6
+2 / 4
+posted 8bd983b38f2c3b61432c8972e7b9cbd386fee97e1f056b3d8ec768ce292da4ab
+3 / 4
+posted ff6b13c74062be5d22c297477088e0696d978b9435f051c11bcf9d7b4b975677
+4 / 4
+posted 8567b368bed0757ce87c58c8ff70c9ffea43ba69dd412e00553c94f596199cd7
+Completed  70
+Completed  70
+Completed  70
+Completed  70
+cr complete
+waiting to start retries 0

@@ -1,0 +1,80 @@
+postTo http://localhost:1633/bytes
+postType application/octet-stream
+tmpFolder tmp
+getFromTemplate https://bee-%d.gateway.ethswarm.org/bytes/%s
+postSize 100000000
+batchSize 2
+getTestTimoutSecs 100
+sleepBetweenBatchMs 300
+maxNode 69
+1 / 2
+error: Get "https://bee-46.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-15.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-8.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-47.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-40.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-39.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-17.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-4.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-29.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-34.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-13.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-5.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-56.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-7.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-31.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-14.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-6.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-30.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-10.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-1.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-63.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-9.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-19.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-66.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-0.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-27.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-28.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-26.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-61.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-25.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-65.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-62.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-52.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-69.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-11.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-23.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-21.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-3.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-49.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-2.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-38.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-32.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-44.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-35.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-37.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-43.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-64.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-33.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-57.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-36.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-68.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-12.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-42.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-58.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-55.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-20.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-67.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-50.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-53.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-51.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-41.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-18.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-54.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-16.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-45.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-60.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-24.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-59.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-48.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout
+error: Get "https://bee-22.gateway.ethswarm.org/bytes/cc4540196f5240b59cd46285a5f58196e4a5961cf2263040a9100c2e8db93a44": net/http: TLS handshake timeout

@@ -1,0 +1,13 @@
+postTo http://localhost:1733/bytes
+postType application/octet-stream
+tmpFolder tmp
+getFromTemplate https://bee-%d.gateway.staging.ethswarm.org/bytes/%s
+postSize 10
+batchSize 100
+getTestTimoutSecs 100
+sleepBetweenBatchMs 100
+maxNode 19
+1 / 100
+posted eec81ab975233bb660ee389a3c458373f6523fe8eadbf6dcd68bf337950d2279
+synced {1 1 0 1 1 1}
+success 20 eec81ab975233bb660ee389a3c458373f6523fe8eadbf6dcd68bf337950d2279
