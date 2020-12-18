@@ -321,6 +321,10 @@ func main(){
 
 	close(retryDoneChannel)
 
-	fmt.Println(len(refsFailed),refsFailed)
+	fmt.Println(len(refsFailed))
+
+	for failed := range refsFailed {
+		fmt.Println(failed)
+	}
 
 }
