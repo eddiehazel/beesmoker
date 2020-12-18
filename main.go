@@ -41,7 +41,7 @@ const (
 	maxNode = 69 //presuming they start at 0
 
 	postSize = 1000
-	batchSize =  5000
+	batchSize =  1
 	getTestTimoutSecs = 100
 	sleepBetweenBatchMs = 300
 	sleepBetweenRetryMs = 5000
@@ -219,10 +219,10 @@ func captureResults(resultsChannel chan []TestResult, retryChannel chan TestResu
     fmt.Println("cr complete")
 }
 
-func doRetry(ref TestResult, maxRetryAttemptsExceededChannel chan TestResult, attempt int) {
+func doRetry(ref TestResult, retryDoneChannel chan TestResult, attempt int) {
 	if attempt >= maxRetryAttempts  {
 		fmt.Println("max retry attempts reached, could not retrieve", attempt, ref.Reference, ref.Node)
-		maxRetryAttemptsExceededChannel <- ref
+		retryDoneChannel <- ref
 
 		return
 	}
@@ -234,11 +234,11 @@ func doRetry(ref TestResult, maxRetryAttemptsExceededChannel chan TestResult, at
 		timeBeforeRetry := time.Duration( sleepBetweenRetryMs * float64(nextAttempt) ) * time.Millisecond
 		fmt.Println("retry failed", nextAttempt, timeBeforeRetry, ref.Reference, ref.Node)
 		time.Sleep(timeBeforeRetry)
-		doRetry(ref, maxRetryAttemptsExceededChannel, nextAttempt)
+		doRetry(ref, retryDoneChannel, nextAttempt)
 	}else{
 		fmt.Println("retry successful", ref.Reference, ref.Node)
 	}
-	// return
+	retryDoneChannel <- ref
 }
 
 func captureRetries(refsToRetry *[]TestResult, retryChannel chan TestResult){
@@ -275,10 +275,12 @@ func main(){
 		if concurrentUploads == false {
 			time.Sleep(sleepBetweenBatchMs * time.Millisecond)
 			<- syncDoneChannel
+			close(syncDoneChannel)
 		}else{
 			time.Sleep(sleepBetweenBatchMs * time.Millisecond)			
 		}
 	}
+
 
 	var refsToRetry []TestResult
 	refsToRetryP := &refsToRetry
@@ -291,18 +293,34 @@ func main(){
 
 	time.Sleep(1 * time.Second)
 
-	maxRetryAttemptsExceededChannel := make(chan TestResult)
+	retryDoneChannel := make(chan TestResult)
 
 	for _, ref := range refsToRetry {
-		go doRetry(ref, maxRetryAttemptsExceededChannel, 0)
-		time.Sleep(sleepBetweenBatchMs * time.Millisecond)	
+		go doRetry(ref, retryDoneChannel, 0)
+		time.Sleep(sleepBetweenBatchMs * time.Millisecond)
 	}
 
 	var refsFailed []TestResult
 
-    for ref := range maxRetryAttemptsExceededChannel {
-		refsFailed = append(refsFailed, ref)
-		fmt.Println(len(refsFailed),refsFailed)
+	didRetries := 0
+    for ref := range retryDoneChannel {
+    	fmt.Println(ref, didRetries, len(refsToRetry))
+    	if didRetries == len(refsToRetry) {
+    		break
+    	}
+    	switch ref.Success {
+		    case true:
+		    	fmt.Println("suc")
+		    	didRetries++
+		    case false:
+		    	didRetries++
+		    	fmt.Println("f")
+				refsFailed = append(refsFailed, ref)
+		}
 	}
+
+	close(retryDoneChannel)
+
+	fmt.Println(len(refsFailed),refsFailed)
 
 }
