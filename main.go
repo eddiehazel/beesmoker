@@ -12,6 +12,9 @@ import (
 	"encoding/json"
 	"time"
 	"path/filepath"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/push"
+	"strconv"
 )
 
 // const (
@@ -32,23 +35,35 @@ import (
 // )
 
 const (
-	concurrentUploads = true
+	concurrentUploads = false
 	postTo = "http://localhost:1633/bytes"
 	getTagStatusTemplate = "http://localhost:1633/tags/%s"
+	promGateway = "http://localhost:9091"
 	postType = "application/octet-stream"
 	tmpFolder = "tmp"
 	getFromTemplate = "https://bee-%d.gateway.ethswarm.org/bytes/%s"
-	maxNode = 69 //presuming they start at 0
+	maxNode = 70 //presuming they start at 0
 
-	postSize = 1000
-	batchSize =  1
-	getTestTimoutSecs = 100
+	postSize = 10*1000
+	batchSize =  10000
+	getTestTimoutSecs = 0
 	sleepBetweenBatchMs = 300
 	sleepBetweenRetryMs = 5000
 	maxRetryAttempts = 3
 )
 
-func postTest(size int64) string {
+var (
+	timestamp string
+	responseDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Namespace: "b",
+		Subsystem: "b",
+		Name:      "response_duration_seconds",
+		Help:      "Histogram of API response durations.",
+		Buckets:   []float64{5, 10, 30 , 50, 100, 200},
+	})
+)
+
+func postTest(i int, size int64) string {
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(io.LimitReader(rand.Reader, size))
 
@@ -73,9 +88,10 @@ func postTest(size int64) string {
 
 	fmt.Println("posted", r.Reference)
 
-
+	attempt := 0
 	synced := false
 	for synced == false {
+
 
 		resp, err := http.Get(fmt.Sprintf(getTagStatusTemplate, tagUID))
 		if err != nil {
@@ -100,11 +116,16 @@ func postTest(size int64) string {
 		json.Unmarshal(body, &r)
 
 		if r.Synced >= r.Total {
-			// fmt.Println("synced", r)
+			fmt.Println("synced", i, r)
 			synced = true
 		}
 
-		time.Sleep(2 * time.Second)
+		if attempt > 10 {
+			fmt.Println("still not synced", i, r)
+		}
+
+		time.Sleep(1000 * time.Millisecond)
+		attempt++
 
 	}
 
@@ -134,11 +155,12 @@ func getTest(ref string, node int) (bool, TestResult) {
 		Timeout: getTestTimoutSecs * time.Second,
 	}
 
-
+	start := time.Now()
 	resp, err := client.Get(url)
 	if err != nil {
 		// fmt.Println(fmt.Sprintf(getFromTemplate, node, ref))
 		fmt.Println("error:", err)
+		//error
 		return false, TestResult{Success: false, Node:node, Url:url, Reference: ref, Status: 0}
 	}
 
@@ -149,6 +171,14 @@ func getTest(ref string, node int) (bool, TestResult) {
 	if suc != true {
 		return false, TestResult{Success: false, Node:node, Url:url, Reference: ref, Status: resp.StatusCode}
 	}
+
+	responseDuration.Observe(time.Since(start).Seconds())
+	if err := push.New(promGateway, timestamp).
+		Collector(responseDuration).
+		Grouping("db", "customers").
+		Push(); err != nil {
+			fmt.Println("Could not push completion time to Pushgateway:", err)
+		}
 
 	return suc, testResult
 }
@@ -162,8 +192,12 @@ func arrayContains(r []int, s int) bool{
     return false
 }
 
-func testRun(resultsChannel chan []TestResult, retryChannel chan TestResult, syncDoneChannel chan bool) {
-	ref := postTest(postSize)
+func testRun(i int, resultsChannel chan []TestResult, retryChannel chan TestResult, syncDoneChannel chan bool) {
+	ref := postTest(i, postSize)
+
+    if concurrentUploads == false {
+    	syncDoneChannel <- true
+	}
 
 	var results []TestResult
 
@@ -179,8 +213,7 @@ func testRun(resultsChannel chan []TestResult, retryChannel chan TestResult, syn
 	
 	successful := 0
 
-    for {
-        v := <-resultChannel
+	for v := range resultChannel {
         results = append(results, v)
         if v.Success == true {
         	successful++
@@ -192,12 +225,7 @@ func testRun(resultsChannel chan []TestResult, retryChannel chan TestResult, syn
             close(resultChannel)
             break
         }
-    }
-
-    if concurrentUploads == false {
-    	syncDoneChannel <- true
 	}
-
 
     // fmt.Println("success", successful, ref)
 
@@ -212,6 +240,7 @@ func captureResults(resultsChannel chan []TestResult, retryChannel chan TestResu
     	fmt.Println("Completed ", len(res))
         allResults = append(allResults, res)
     	didComplete++
+    	fmt.Println(didComplete)
     	if didComplete >= batchSize {
 	    	break
     	}
@@ -253,6 +282,7 @@ func captureRetries(refsToRetry *[]TestResult, retryChannel chan TestResult){
 
 func main(){
 
+	//print config
 	fmt.Println("postTo", postTo)
 	fmt.Println("postType", postType)
 	fmt.Println("tmpFolder", tmpFolder)
@@ -264,21 +294,29 @@ func main(){
 	fmt.Println("maxNode", maxNode)
 
 
+	timestamp = strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
+
+	fmt.Println("jobID", timestamp)
+
 	resultsChannel := make(chan []TestResult)  
 	retryChannel := make(chan TestResult)  
+
+
 
 	for i := 0; i <= batchSize - 1; i++ {
 		fmt.Println(i + 1, "/", batchSize)
 
 		syncDoneChannel := make(chan bool)
-		go testRun(resultsChannel, retryChannel, syncDoneChannel)
+		go testRun(i, resultsChannel, retryChannel, syncDoneChannel)
+
 		if concurrentUploads == false {
-			time.Sleep(sleepBetweenBatchMs * time.Millisecond)
+			// time.Sleep(sleepBetweenBatchMs * time.Millisecond)
 			<- syncDoneChannel
 			close(syncDoneChannel)
 		}else{
 			time.Sleep(sleepBetweenBatchMs * time.Millisecond)			
 		}
+
 	}
 
 
@@ -316,11 +354,9 @@ func main(){
     	}
     	switch ref.Success {
 		    case true:
-		    	fmt.Println("suc")
 		    	didRetries++
 		    case false:
 		    	didRetries++
-		    	fmt.Println("f")
 				refsFailed = append(refsFailed, ref)
 		}
 	}
