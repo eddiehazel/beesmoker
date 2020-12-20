@@ -289,7 +289,13 @@ func main(){
 	//complete the whole run before starting retries
 	captureResults(resultsChannel, retryChannel)
 
-	fmt.Println("waiting to start retries", len(refsToRetry))
+	if len(refsToRetry) > 0 {
+		fmt.Println("waiting to start retries", len(refsToRetry))
+	}else{
+		fmt.Println("Success! 🐝 🐝 🐝 🐝 🐝")
+		return
+	}
+
 
 	time.Sleep(1 * time.Second)
 
