@@ -3,7 +3,6 @@
 package main
 
 import (
-	"os"
 	"sync"
 	"fmt"
 	"io"
@@ -44,7 +43,7 @@ const (
 	postType = "application/octet-stream"
 	tmpFolder = "tmp"
 	getFromTemplate = "https://bee-%d.gateway.ethswarm.org/bytes/%s"
-	maxNode = 70 //presuming they start at 0
+	maxNode = 69 //presuming they start at 0
 
 	postSize = 1.5 * 1000 * 1000
 	batchSize =  10
@@ -78,11 +77,23 @@ var (
 		Help:      "Histogram of sync durations.",
 		Buckets:   []float64{5, 10, 30 , 50, 100, 200},
 	})
+	syncFailedGauge = prometheus.NewGauge(prometheus.GaugeOpts{
+	    Namespace: "sig",
+	    Subsystem: "smoketests",
+	    Name:      "sync_failed",
+	    Help:      "Number of abandonded syncs",
+	})
 	failedGauge = prometheus.NewGauge(prometheus.GaugeOpts{
 	    Namespace: "sig",
 	    Subsystem: "smoketests",
-	    Name:      "failed",
+	    Name:      "retries_failed",
 	    Help:      "Number of failed even after retries",
+	})
+	retryGauge = prometheus.NewGauge(prometheus.GaugeOpts{
+	    Namespace: "sig",
+	    Subsystem: "smoketests",
+	    Name:      "retries",
+	    Help:      "Number of retries",
 	})
 )
 
@@ -161,8 +172,8 @@ func postTest(mmtx sync.Mutex, i int, size int64) string {
 	obh(mmtx, "postedDuration", timestamp, postedDuration, start, r.Reference)
 
 	attempt := 0
-	synced := false
-	for synced == false {
+	syncing := true
+	for syncing == true {
 
 
 		resp, err := http.Get(fmt.Sprintf(getTagStatusTemplate, tagUID))
@@ -192,11 +203,14 @@ func postTest(mmtx sync.Mutex, i int, size int64) string {
 			obh(mmtx, "syncedDuration", timestamp, syncedDuration, start, r.Reference)
 
 			fmt.Println("synced", i, tr)
-			synced = true
+			syncing = false
 		}
 
-		if attempt > 10 {
-			fmt.Println("still not synced", i, r)
+		//todo, link this to file size and expected sync time / attempts
+		if attempt > 100 {
+			fmt.Println("still not synced, abandoning... ", i, tr)
+			obg("syncFailedGauge", timestamp, syncFailedGauge)
+			syncing = false
 		}
 
 		time.Sleep(1000 * time.Millisecond)
@@ -325,17 +339,17 @@ func doRetry(mmtx sync.Mutex, ref TestResult, retryDoneChannel chan TestResult, 
 		return
 	}
 	fmt.Println(ref.Reference, ref.Node, "Trying again... ")
-	o, _ := getTest(mmtx, ref.Reference, ref.Node)
+	o, _ref := getTest(mmtx, ref.Reference, ref.Node)
 	if o == false {
 		nextAttempt := attempt + 1
 		timeBeforeRetry := time.Duration( sleepBetweenRetryMs * float64(nextAttempt) ) * time.Millisecond
 		fmt.Println("retry failed", nextAttempt, timeBeforeRetry, ref.Reference, ref.Node)
 		time.Sleep(timeBeforeRetry)
-		doRetry(mmtx, ref, retryDoneChannel, nextAttempt)
+		doRetry(mmtx, _ref, retryDoneChannel, nextAttempt)
 		return
 	}else{
 		fmt.Println("retry successful", ref.Reference, ref.Node)
-		retryDoneChannel <- ref
+		retryDoneChannel <- _ref
 	}
 }
 
@@ -403,6 +417,9 @@ func main(){
 	//do retries
 	retryDoneChannel := make(chan TestResult)
 	for _, ref := range refsToRetry {
+
+		obg("failedGauge", timestamp, failedGauge)
+
 		go doRetry(mmtx, ref, retryDoneChannel, 0)
 		time.Sleep(sleepBetweenBatchMs * time.Millisecond)
 	}
@@ -428,6 +445,7 @@ func main(){
 
 	if len(refsFailed) == 0 {
 		fmt.Println("retries completed, success! 🐝 🐝 🐝 🐝 🐝", timestamp)
+		return
 	}
 
 	if len(refsFailed) > 0 {
