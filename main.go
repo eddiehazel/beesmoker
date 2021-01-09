@@ -68,14 +68,14 @@ var (
 		Subsystem: "smoketests",
 		Name:      "posted_duration_seconds",
 		Help:      "Histogram of post durations.",
-		Buckets:   []float64{5, 10, 30 , 50, 100, 200},
+		Buckets:   []float64{0.1, 0.2, 0.5 , 1, 1.5, 2, 5, 10, 30 , 50, 100, 200},
 	})
 	syncedDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
 		Namespace: "sig",
 		Subsystem: "smoketests",
 		Name:      "sync_duration_seconds",
 		Help:      "Histogram of sync durations.",
-		Buckets:   []float64{5, 10, 30 , 50, 100, 200},
+		Buckets:   []float64{0.1, 0.2, 0.5 , 1, 1.5, 2, 5, 10, 30 , 50, 100, 200},
 	})
 	syncFailedGauge = prometheus.NewGauge(prometheus.GaugeOpts{
 	    Namespace: "sig",
