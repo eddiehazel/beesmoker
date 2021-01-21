@@ -37,21 +37,20 @@ import (
 
 const (
 	concurrentUploads = false
-	postTo = "http://localhost:1633/files"
+	postTo = "http://localhost:1633/bytes"
 	getTagStatusTemplate = "http://localhost:1633/tags/%s"
 	promGateway = "http://localhost:9091"
 	postType = "application/octet-stream"
 	tmpFolder = "tmp"
 	getFromTemplate = "https://bee-%d.gateway.ethswarm.org/bytes/%s"
 	maxNode = 69 //presuming they start at 0
-
-	postSize = 1.5 * 1000 * 1000
-	batchSize =  10
+	postSize = 1 * 1000 * 1000
+	batchSize =  2
 	getTestTimoutSecs = 100
-	timeBeforeGetSecs = 40
+	timeBeforeGetSecs = 1
 	sleepBetweenBatchMs = 300
 	sleepBetweenRetryMs = 1000
-	maxRetryAttempts = 1
+	maxRetryAttempts = 10
 )
 
 var (
@@ -78,27 +77,29 @@ var (
 		Buckets:   []float64{0.1, 0.2, 0.5 , 1, 1.5, 2, 5, 10, 30 , 50, 100, 200},
 	})
 	syncFailedGauge = prometheus.NewGauge(prometheus.GaugeOpts{
-	    Namespace: "sig",
-	    Subsystem: "smoketests",
-	    Name:      "sync_failed",
-	    Help:      "Number of abandonded syncs",
+		Namespace: "sig",
+		Subsystem: "smoketests",
+		Name:      "sync_failed",
+		Help:      "Number of abandonded syncs",
 	})
 	failedGauge = prometheus.NewGauge(prometheus.GaugeOpts{
-	    Namespace: "sig",
-	    Subsystem: "smoketests",
-	    Name:      "retries_failed",
-	    Help:      "Number of failed even after retries",
+		Namespace: "sig",
+		Subsystem: "smoketests",
+		Name:      "retries_failed",
+		Help:      "Number of failed even after retries",
 	})
 	retryGauge = prometheus.NewGauge(prometheus.GaugeOpts{
-	    Namespace: "sig",
-	    Subsystem: "smoketests",
-	    Name:      "retries",
-	    Help:      "Number of retries",
+		Namespace: "sig",
+		Subsystem: "smoketests",
+		Name:      "retries",
+		Help:      "Number of retries",
 	})
 )
 
 func obh(mmtx sync.Mutex, metricName string, jobId string, m prometheus.Histogram, start time.Time, ref string){
+	fmt.Println("obh", metricName, jobId, start, ref, time.Now(), time.Since(start).Seconds())
 	mmtx.Lock()
+
 	m.Observe(time.Since(start).Seconds())
 	if err := push.New(promGateway, jobId).
 		Collector(m).
@@ -131,6 +132,7 @@ func obh(mmtx sync.Mutex, metricName string, jobId string, m prometheus.Histogra
 // }
 
 func obg(metricName string, jobId string, m prometheus.Gauge){
+	fmt.Println("obg", metricName, jobId)
 	m.Inc()
 	if err := push.New(promGateway, jobId).
 		Collector(m).
@@ -144,7 +146,6 @@ func obg(metricName string, jobId string, m prometheus.Gauge){
 func postTest(mmtx sync.Mutex, i int, size int64) string {
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(io.LimitReader(rand.Reader, size))
-
 
 	start := time.Now()
 
@@ -197,12 +198,14 @@ func postTest(mmtx sync.Mutex, i int, size int64) string {
 		}
 		var tr TagResponse
 		json.Unmarshal(body, &tr)
+		fmt.Println("syncing", r.Reference, i, tr)
 
-		if tr.Synced >= tr.Total {
+		//just waiting for sent not sync
+		if tr.Sent >= tr.Total {
 
 			obh(mmtx, "syncedDuration", timestamp, syncedDuration, start, r.Reference)
 
-			fmt.Println("synced", i, tr)
+			fmt.Println("synced", r.Reference, i, tr)
 			syncing = false
 		}
 
@@ -219,11 +222,11 @@ func postTest(mmtx sync.Mutex, i int, size int64) string {
 	}
 
 	//save file for later investigations
-    ioutil.WriteFile(filepath.Join(tmpFolder, r.Reference), buf.Bytes(), 0777)
+	ioutil.WriteFile(filepath.Join(tmpFolder, r.Reference), buf.Bytes(), 0777)
 
-    if err != nil {
-        panic(err.Error())
-    }
+	if err != nil {
+		panic(err.Error())
+	}
 
 	return r.Reference
 }
@@ -254,6 +257,17 @@ func getTest(mmtx sync.Mutex, ref string, node int) (bool, TestResult) {
 		return false, TestResult{Success: false, Node:node, Url:url, Reference: ref, Status: 0}
 	}
 
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("error:", err)
+		return false, TestResult{Success: false, Node:node, Url:url, Reference: ref, Status: 0}
+	}
+
+	if len(body) != postSize {
+		fmt.Println("error: retrieved file is not correct size, retrieved:", len(body), "actual:", int(postSize))
+		return false, TestResult{Success: false, Node:node, Url:url, Reference: ref, Status: 0}
+	}
+
 	suc := resp.StatusCode == 200
 
 	testResult := TestResult{Success: true, Node: node, Url: url, Reference: ref, Status: resp.StatusCode}
@@ -269,19 +283,19 @@ func getTest(mmtx sync.Mutex, ref string, node int) (bool, TestResult) {
 
 func arrayContains(r []int, s int) bool{
 	for _, a := range r {
-        if a == s {
-            return true
-        }
-    }
-    return false
+		if a == s {
+			return true
+		}
+	}
+	return false
 }
 
 func testRun(mmtx sync.Mutex, i int, resultsChannel chan []TestResult, retryChannel chan TestResult, syncDoneChannel chan bool) {
 
 	ref := postTest(mmtx, i, postSize)
 
-    if concurrentUploads == false {
-    	syncDoneChannel <- true
+	if concurrentUploads == false {
+		syncDoneChannel <- true
 	}
 
 	var results []TestResult
@@ -289,30 +303,30 @@ func testRun(mmtx sync.Mutex, i int, resultsChannel chan []TestResult, retryChan
 	resultChannel := make(chan TestResult)
 
 	for i := 0; i <= maxNode; i++ {
-	    go func(i int) {
-	        _, r := getTest(mmtx, ref, i)
-    	    resultChannel <- r
-	    }(i)
+		go func(i int) {
+			_, r := getTest(mmtx, ref, i)
+			resultChannel <- r
+		}(i)
 	}
 
 	
 	successful := 0
 
 	for v := range resultChannel {
-        results = append(results, v)
-        if v.Success == true {
-        	successful++
-        }
-        if v.Success != true {
-        	retryChannel <- v
-        }
-        if len(results) == maxNode + 1 {
-            close(resultChannel)
-            break
-        }
+		results = append(results, v)
+		if v.Success == true {
+			successful++
+		}
+		if v.Success != true {
+			retryChannel <- v
+		}
+		if len(results) == maxNode + 1 {
+			close(resultChannel)
+			break
+		}
 	}
 
-    resultsChannel <- results
+	resultsChannel <- results
 }
 
 func captureResults(resultsChannel chan []TestResult, retryChannel chan TestResult){
@@ -320,15 +334,15 @@ func captureResults(resultsChannel chan []TestResult, retryChannel chan TestResu
 	var allResults [][]TestResult
 	for {
 		res := <-resultsChannel
-    	fmt.Println("Completed ", len(res))
-        allResults = append(allResults, res)
-    	didComplete++
-    	fmt.Println(didComplete)
-    	if didComplete >= batchSize {
-	    	break
-    	}
+		fmt.Println("Completed ", len(res))
+		allResults = append(allResults, res)
+		didComplete++
+		fmt.Println(didComplete)
+		if didComplete >= batchSize {
+			break
+		}
 	}
-    fmt.Println("cr complete")
+	fmt.Println("cr complete")
 }
 
 func doRetry(mmtx sync.Mutex, ref TestResult, retryDoneChannel chan TestResult, attempt int) {
@@ -427,16 +441,16 @@ func main(){
 	var refsFailed []TestResult
 
 	didRetries := 0
-    for ref := range retryDoneChannel {
-    	fmt.Println(ref, didRetries, len(refsToRetry))
-    	if didRetries == len(refsToRetry) - 1 {
-    		break
-    	}
-    	switch ref.Success {
-		    case true:
-		    	didRetries++
-		    case false:
-		    	didRetries++
+	for ref := range retryDoneChannel {
+		fmt.Println(ref, didRetries, len(refsToRetry))
+		if didRetries == len(refsToRetry) - 1 {
+			break
+		}
+		switch ref.Success {
+			case true:
+				didRetries++
+			case false:
+				didRetries++
 				refsFailed = append(refsFailed, ref)
 		}
 	}
@@ -449,7 +463,7 @@ func main(){
 	}
 
 	if len(refsFailed) > 0 {
-		fmt.Println("retries completed, still failed: ", len(refsFailed), timestamp)
+		fmt.Println("retries completed, still failed: ", len(refsFailed), timestamp, "😟🙈🌤")
 
 		for _, failed := range refsFailed {
 			obg("failedGauge", timestamp, failedGauge)
@@ -457,6 +471,6 @@ func main(){
 		}	
 	}
 
-	fmt.Println("retries completed, failed: ", len(refsFailed), timestamp)
+	fmt.Println("retries completed, failed: ", len(refsFailed), timestamp, "😟🙈🌤")
 
 }
