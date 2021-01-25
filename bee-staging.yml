@@ -3,10 +3,10 @@ bootnode:
 - /dnsaddr/bootnode.staging.ethswarm.org
 clef-signer-enable: false
 clef-signer-endpoint: ""
-config: /Users/sig/.bee.yaml
+config: /go/src/app/bee-staging.yml 
 cors-allowed-origins:
 - '*'
-data-dir: /Users/sig/.bee18
+data-dir: /go/src/app/data
 db-capacity: "5000000"
 debug-api-addr: :1635
 debug-api-enable: true
