@@ -16,6 +16,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
 	"strconv"
+	"sort"
 )
 
 // const (
@@ -35,6 +36,24 @@ import (
 // 	maxRetryAttempts = 3
 // )
 
+// const (
+// 	concurrentUploads = false
+// 	postTo = "http://localhost:1633/bytes"
+// 	getTagStatusTemplate = "http://localhost:1633/tags/%s"
+// 	promGateway = "http://localhost:9091"
+// 	postType = "application/octet-stream"
+// 	tmpFolder = "tmp"
+// 	getFromTemplate = "https://bee-%d.gateway.ethswarm.org/bytes/%s"
+// 	maxNode = 69 //presuming they start at 0
+// 	postSize = 0.4 * 1000 * 1000
+// 	batchSize =  2
+// 	getTestTimoutSecs = 100
+// 	timeBeforeGetSecs = 1
+// 	sleepBetweenBatchMs = 300
+// 	sleepBetweenRetryMs = 1000
+// 	maxRetryAttempts = 5
+// )
+
 const (
 	concurrentUploads = false
 	postTo = "http://localhost:1633/bytes"
@@ -42,16 +61,18 @@ const (
 	promGateway = "http://localhost:9091"
 	postType = "application/octet-stream"
 	tmpFolder = "tmp"
-	getFromTemplate = "https://bee-%d.gateway.ethswarm.org/bytes/%s"
-	maxNode = 69 //presuming they start at 0
-	postSize = 1 * 1000 * 1000
-	batchSize =  2
+	getFromTemplate = "https://bee-%d.gateway.staging.ethswarm.org/bytes/%s"
+	maxNode = 19 //presuming they start at 0
+	postSize = 0.5 * 1000 * 1000
+	attemptsAfterSent = 10
+	batchSize =  3
 	getTestTimoutSecs = 100
-	timeBeforeGetSecs = 1
+	timeBeforeGetSecs = 30
 	sleepBetweenBatchMs = 300
 	sleepBetweenRetryMs = 1000
-	maxRetryAttempts = 10
+	maxRetryAttempts = 5
 )
+
 
 var (
 	timestamp string
@@ -97,7 +118,6 @@ var (
 )
 
 func obh(mmtx sync.Mutex, metricName string, jobId string, m prometheus.Histogram, start time.Time, ref string){
-	fmt.Println("obh", metricName, jobId, start, ref, time.Now(), time.Since(start).Seconds())
 	mmtx.Lock()
 
 	m.Observe(time.Since(start).Seconds())
@@ -132,7 +152,6 @@ func obh(mmtx sync.Mutex, metricName string, jobId string, m prometheus.Histogra
 // }
 
 func obg(metricName string, jobId string, m prometheus.Gauge){
-	fmt.Println("obg", metricName, jobId)
 	m.Inc()
 	if err := push.New(promGateway, jobId).
 		Collector(m).
@@ -172,7 +191,7 @@ func postTest(mmtx sync.Mutex, i int, size int64) string {
 
 	obh(mmtx, "postedDuration", timestamp, postedDuration, start, r.Reference)
 
-	attempt := 0
+	attemptAfterSent := 0
 	syncing := true
 	for syncing == true {
 
@@ -201,7 +220,7 @@ func postTest(mmtx sync.Mutex, i int, size int64) string {
 		fmt.Println("syncing", r.Reference, i, tr)
 
 		//just waiting for sent not sync
-		if tr.Sent >= tr.Total {
+		if tr.Synced >= tr.Total {
 
 			obh(mmtx, "syncedDuration", timestamp, syncedDuration, start, r.Reference)
 
@@ -209,15 +228,17 @@ func postTest(mmtx sync.Mutex, i int, size int64) string {
 			syncing = false
 		}
 
-		//todo, link this to file size and expected sync time / attempts
-		if attempt > 100 {
+		if tr.Sent >= tr.Total {
+			attemptAfterSent++
+		}
+
+		if attemptAfterSent > attemptsAfterSent {
 			fmt.Println("still not synced, abandoning... ", i, tr)
 			obg("syncFailedGauge", timestamp, syncFailedGauge)
 			syncing = false
 		}
 
 		time.Sleep(1000 * time.Millisecond)
-		attempt++
 
 	}
 
@@ -232,11 +253,12 @@ func postTest(mmtx sync.Mutex, i int, size int64) string {
 }
 
 type TestResult struct {
-  Success bool
-  Node int
-  Url string
-  Reference string
-  Status int
+  Success bool `json:"success"`
+  Node int `json:"node"`
+  Url string `json:"url"`
+  Reference string `json:"reference"`
+  Status int `json:"status"`
+  CompletedTime float64 `json:"completedTime`
 }
 
 func getTest(mmtx sync.Mutex, ref string, node int) (bool, TestResult) {
@@ -247,34 +269,35 @@ func getTest(mmtx sync.Mutex, ref string, node int) (bool, TestResult) {
 		Timeout: getTestTimoutSecs * time.Second,
 	}
 
-	time.Sleep(timeBeforeGetSecs * time.Second)
-
 	start := time.Now()
 
 	resp, err := client.Get(url)
 	if err != nil {
 		fmt.Println("error:", err)
-		return false, TestResult{Success: false, Node:node, Url:url, Reference: ref, Status: 0}
+		return false, TestResult{Success: false, Node:node, Url:url, Reference: ref, Status: 0, CompletedTime: 0}
 	}
+
+	completedTime := time.Since(start).Seconds()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("error:", err)
-		return false, TestResult{Success: false, Node:node, Url:url, Reference: ref, Status: 0}
+		return false, TestResult{Success: false, Node:node, Url:url, Reference: ref, Status: 0, CompletedTime: 0}
 	}
 
 	if len(body) != postSize {
 		fmt.Println("error: retrieved file is not correct size, retrieved:", len(body), "actual:", int(postSize))
-		return false, TestResult{Success: false, Node:node, Url:url, Reference: ref, Status: 0}
+		return false, TestResult{Success: false, Node:node, Url:url, Reference: ref, Status: 0, CompletedTime: 0}
 	}
 
 	suc := resp.StatusCode == 200
 
-	testResult := TestResult{Success: true, Node: node, Url: url, Reference: ref, Status: resp.StatusCode}
+	testResult := TestResult{Success: true, Node: node, Url: url, Reference: ref, Status: resp.StatusCode, CompletedTime: completedTime}
 
 	if suc != true {
 		return false, TestResult{Success: false, Node:node, Url:url, Reference: ref, Status: resp.StatusCode}
 	}
+
 
 	obh(mmtx, "responseDuration", timestamp, responseDuration, start, ref)
 
@@ -297,6 +320,9 @@ func testRun(mmtx sync.Mutex, i int, resultsChannel chan []TestResult, retryChan
 	if concurrentUploads == false {
 		syncDoneChannel <- true
 	}
+
+	fmt.Println("waiting", timeBeforeGetSecs, "seconds before attempting to retrieve", ref)
+	time.Sleep(timeBeforeGetSecs * time.Second)
 
 	var results []TestResult
 
@@ -329,12 +355,12 @@ func testRun(mmtx sync.Mutex, i int, resultsChannel chan []TestResult, retryChan
 	resultsChannel <- results
 }
 
-func captureResults(resultsChannel chan []TestResult, retryChannel chan TestResult){
+func captureResults(resultsChannel chan []TestResult, retryChannel chan TestResult) [][]TestResult{
 	didComplete := 0
 	var allResults [][]TestResult
 	for {
 		res := <-resultsChannel
-		fmt.Println("Completed ", len(res))
+		fmt.Println("Completed", len(res))
 		allResults = append(allResults, res)
 		didComplete++
 		fmt.Println(didComplete)
@@ -343,6 +369,7 @@ func captureResults(resultsChannel chan []TestResult, retryChannel chan TestResu
 		}
 	}
 	fmt.Println("cr complete")
+	return allResults
 }
 
 func doRetry(mmtx sync.Mutex, ref TestResult, retryDoneChannel chan TestResult, attempt int) {
@@ -374,8 +401,24 @@ func captureRetries(refsToRetry *[]TestResult, retryChannel chan TestResult){
 	}
 }
 
+func printSortedResults(allResults [][]TestResult) {
+	for _, results := range allResults {
+		sort.Slice(results, func(i, j int) bool { return results[i].CompletedTime < results[j].CompletedTime })
+		fmt.Println(results[0].Url)
+		for _, result := range results {
+			fmt.Println(result.CompletedTime)
+		}
+	}
+}
+
 
 func main(){
+
+	// trigger little snitch warning for Dan only
+	_, err := http.Get("https://gateway.ethswarm.org")
+	if err != nil {
+		panic(err.Error())
+	}
 
 	//print config
 	fmt.Println("postTo", postTo)
@@ -419,7 +462,18 @@ func main(){
 	go captureRetries(refsToRetryP, retryChannel)
 
 	//complete the whole run and capture retries
-	captureResults(resultsChannel, retryChannel)
+	allResults := captureResults(resultsChannel, retryChannel)
+
+	printSortedResults(allResults)
+
+    // ar, err := json.Marshal(allResults)
+    // if err != nil {
+    //     fmt.Println(err)
+    //     return
+    // }
+    // fmt.Println(string(ar))
+
+
 
 	if len(refsToRetry) > 0 {
 		fmt.Println("waiting to start retries", len(refsToRetry))
