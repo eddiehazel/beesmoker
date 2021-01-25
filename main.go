@@ -48,9 +48,9 @@ const (
 	tmpFolder = "tmp"
 	getFromTemplate = "https://bee-%d.gateway.staging.ethswarm.org/bytes/%s"
 	maxNode = 19 //presuming they start at 0
-	postSize = 0.1 * 1000 * 1000
+	postSize = 0.001 * 1000 * 1000
 	maxAttemptsAfterSent = 10
-	batchSize =  3
+	batchSize =  500
 	getTestTimoutSecs = 100
 	timeBeforeGetSecs = 30
 	sleepBetweenBatchMs = 300
@@ -502,6 +502,6 @@ func main(){
 		}	
 	}
 
-	fmt.Println("retries completed, failed: ", len(refsFailed), timestamp, "😟🙈🌤")
+	fmt.Println("retries completed, failed: ", len(refsFailed), "of", batchSize * (maxNode+1), "run:", timestamp, "😟🙈🌤")
 
 }
