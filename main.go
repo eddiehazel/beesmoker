@@ -46,6 +46,7 @@ import (
 // 	getFromTemplate = "https://bee-%d.gateway.ethswarm.org/bytes/%s"
 // 	maxNode = 69 //presuming they start at 0
 // 	postSize = 0.4 * 1000 * 1000
+// attemptsAfterSent = 10
 // 	batchSize =  2
 // 	getTestTimoutSecs = 100
 // 	timeBeforeGetSecs = 1
@@ -193,6 +194,7 @@ func postTest(mmtx sync.Mutex, i int, size int64) string {
 
 	attemptAfterSent := 0
 	syncing := true
+	lastSynced := 0
 	for syncing == true {
 
 
@@ -228,9 +230,12 @@ func postTest(mmtx sync.Mutex, i int, size int64) string {
 			syncing = false
 		}
 
-		if tr.Sent >= tr.Total {
+
+		if lastSynced == tr.Synced && tr.Sent >= tr.Total {
 			attemptAfterSent++
 		}
+
+		lastSynced = tr.Synced
 
 		if attemptAfterSent > attemptsAfterSent {
 			fmt.Println("still not synced, abandoning... ", i, tr)
