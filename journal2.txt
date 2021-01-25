@@ -1,0 +1,433 @@
+sig testing journal
+-------------------
+
+
+all with
+ip-192-168-0-10 :: github.com/ethersphere/bee 130 » bee version
+0.3.2-b0abaa7c
+
+preamble - run up to proper journal
+-----------------------------------
+
+9/12 - morning
+
+Added syncing to script and started testing on Staging network instead of Prod.
+
+At this stage testing single or few chunks.
+
+Prod was showing mostly success with a few failures. I would guess 1000/5
+
+Initially staging was showing about 50% failures, great, something reproducible!
+
+Elad explains what is needed to distinctly identify bug including Jaeger tracing.
+
+Jaeger not working properly, Ivan worked on this.
+
+During work to fix Jaeger it is noticed that staging nodes infura endpoints api key got switched off. Ivan fixes and resets s. cluster.
+
+9/12 - evening
+
+Sig restarts testing approx 3 hours later.
+
+Absolutely verything works, more than 20k single chunk requests everything work fine, also tested 15mb and even 100mb payloads, all 100%. Sig considers possibility he has gone mad.
+
+10/12 - morning
+
+Rerun script 10 lots of 15m payload
+
+Now errors are appearing.
+
+Closer look shows slock.it goerli endpoint is down. 
+
+There are some errors saying settlement could not take place.
+
+Retrievals have failed, Jaeger did 503 then some results seemed to disappear (?)
+
+Changed to infura endpoint, restarted node, pusher finishes
+
+All of a sudden a lot of these start to appear in the node, pretty sure they weren't there before
+
+DEBU[2020-12-10T09:20:21Z] error handle protocol retrieval/1.0.0: stream retrieval: peer d0dbe6fa81f3e4e0d1a9deb113d56541a36abf773bb6dca903b60de58cc85871: error: retrieve chunk: get closest for address cab253c08dd8eabf5db1a3edf5f4cfbff15b5d8fd60dc3e1d446d997eea54083, allow upstream false: no peer found  traceid=4386144ccca2e73
+
+Sig resolves to start rigorous and explicit journal.
+
+proper journal
+-----------------------------------
+
+787c83387d511d84fc87c8d224a8d7c9bc30d93d - 10/12
+
+100% success!
+
+Starting new node: 7ca6805256eb649c3e51cdb8521744e82e13d750c3063d522589ce3326204ca6
+
+lots of these messages still in logs (fresh node)
+
+TRAC[2020-12-10T09:43:04Z] retrieval: requesting chunk 2f58f3cc386941137a2bb38b2c4f02c21f28c9397d37dd42ca749efc1d7ce872 from peer 69fd338223406190996ff3e3b2e9faa51f842c687189002431d1cb7aea7defa5
+DEBU[2020-12-10T09:43:04Z] retrieval: failed to get chunk 2f58f3cc386941137a2bb38b2c4f02c21f28c9397d37dd42ca749efc1d7ce872 from peer 69fd338223406190996ff3e3b2e9faa51f842c687189002431d1cb7aea7defa5: new stream: peer not found  traceid=29dee7be1ddfbec3
+DEBU[2020-12-10T09:43:04Z] error handle protocol retrieval/1.0.0: stream retrieval: peer 4f70ad160d1e346d12cb1f8ec53fb813a44a66dd5dde4128e00d76014a24eb4b: error: retrieve chunk: get closest for address 2f58f3cc386941137a2bb38b2c4f02c21f28c9397d37dd42ca749efc1d7ce872, allow upstream false: no peer found  traceid=29dee7be1ddfbec3
+
+postTo http://localhost:1733/bytes
+postType application/octet-stream
+tmpFolder tmp
+getFromTemplate https://bee-%d.gateway.staging.ethswarm.org/bytes/%s
+postSize 15000000
+batchSize 10
+getTestTimoutSecs 100
+sleepBetweenBatchMs 10000
+maxNode 19
+1 / 10
+posted 1c7185f501d54d9e949c5b2ea7504de29e733096e7d5dfd966a7896c02543e42
+2 / 10
+posted c43ed03dd54a8506a024534f9f87f0a75f6cd61b4f3b20c1c0df929a55069b01
+3 / 10
+posted d78cd3a7fbe129e1b7590e2632f1ccd90cbe74d5c5a568745b3b2e43aacefc7b
+4 / 10
+posted 90316712c86ea1549bd4edea0b002153265d6a187efad492d8f6ceb12ec4a6a8
+5 / 10
+posted 2fef43990d91edd212c6076a7072a7b55bea6bc72e2c52efd455fb7f716186d0
+6 / 10
+posted 71f87b29f1c6618b48138809ba1efd4e028ade5b165ab61770d7ab38b60fe97e
+7 / 10
+posted 6910b669518f42b90017b74de191cad587c097cd3efc69be8223916c69d7aef4
+8 / 10
+posted 35a8a5bf69b79fbf47642caaca71f681fddbde1b87534c37c1825dc4f5b42ac8
+9 / 10
+posted e972496182dd7534bcb35efd8236ab3d85b3531bb314a16efb297b64055ad770
+synced {3693 3693 0 3693 4594 3693}
+10 / 10
+posted 678b75da9800ffa87abf4cd5af5d324cbd13b9ae2bebadecac40217a8448d6b2
+synced {3693 3693 0 3693 4170 3693}
+success 20 1c7185f501d54d9e949c5b2ea7504de29e733096e7d5dfd966a7896c02543e42
+Completed  20
+success 20 c43ed03dd54a8506a024534f9f87f0a75f6cd61b4f3b20c1c0df929a55069b01
+Completed  20
+synced {3693 3693 0 3693 4350 3693}
+success 20 d78cd3a7fbe129e1b7590e2632f1ccd90cbe74d5c5a568745b3b2e43aacefc7b
+Completed  20
+synced {3693 3693 0 3693 4204 3693}
+success 20 90316712c86ea1549bd4edea0b002153265d6a187efad492d8f6ceb12ec4a6a8
+Completed  20
+synced {3693 3693 0 3693 4277 3693}
+success 20 2fef43990d91edd212c6076a7072a7b55bea6bc72e2c52efd455fb7f716186d0
+Completed  20
+synced {3693 3693 0 3693 4353 3693}
+success 20 71f87b29f1c6618b48138809ba1efd4e028ade5b165ab61770d7ab38b60fe97e
+Completed  20
+synced {3693 3693 0 3693 4575 3693}
+success 20 6910b669518f42b90017b74de191cad587c097cd3efc69be8223916c69d7aef4
+Completed  20
+synced {3693 3693 0 3693 4542 3693}
+success 20 35a8a5bf69b79fbf47642caaca71f681fddbde1b87534c37c1825dc4f5b42ac8
+Completed  20
+synced {3693 3693 0 3693 4689 3693}
+success 20 e972496182dd7534bcb35efd8236ab3d85b3531bb314a16efb297b64055ad770
+Completed  20
+synced {3693 3693 0 3693 4589 3693}
+success 20 678b75da9800ffa87abf4cd5af5d324cbd13b9ae2bebadecac40217a8448d6b2
+Completed  20
+cr complete
+waiting to start retries 0
+stillNotWorking 0
+[]
+
+
+
+d385e404f7c68cac176d386bebf1d3f436976cc6
+
+const (
+	postTo = "http://localhost:1733/bytes"
+	getTagStatusTemplate = "http://localhost:1733/tags/%s"
+	postType = "application/octet-stream"
+	tmpFolder = "tmp"
+	getFromTemplate = "https://bee-%d.gateway.staging.ethswarm.org/bytes/%s"
+	postSize = 10
+	batchSize =  5000
+	getTestTimoutSecs = 100
+	sleepBetweenBatchMs = 100
+	maxNode = 19 //presuming they start at 0
+)
+
+100% success!
+
+
+
+trying mainnet for sanity, fresh node b734173f768aae7218fcd971ed9b6246d612d0c2da8dd965fbf86fc7286f0b77
+
+a149ed1afa0971a098bf9c17e75e9b57b4df0e72
+
+errors appear....
+
+const (
+	postTo = "http://localhost:1633/bytes"
+	getTagStatusTemplate = "http://localhost:1633/tags/%s"
+	postType = "application/octet-stream"
+	tmpFolder = "tmp"
+	getFromTemplate = "https://bee-%d.gateway.ethswarm.org/bytes/%s"
+	postSize = 10
+	batchSize =  1000
+	getTestTimoutSecs = 100
+	sleepBetweenBatchMs = 100
+	maxNode = 69 //presuming they start at 0
+)
+
+do some checking while retries are happening....
+
+sig :: github.com/acud/po-compare » curl https://bee-3.gateway.ethswarm.org/bytes/bdbd6cc6249031137f567f803f637c5b7cffc68ab9d269bd68c3e5ca676f5d64
+��%
+sig :: github.com/acud/po-compare » curl https://bee-3.gateway.ethswarm.org/bytes/bd03e706b995d7d039dd1296b5379243cd8d5885c77a01486f31bb48513f8e61
+Ej���iL2�K%
+sig :: github.com/acud/po-compare » curl https://bee-20.gateway.ethswarm.org/bytes/bd03e706b995d7d039dd1296b5379243cd8d5885c77a01486f31bb48513f8e61
+{"message":"Not Found","code":404}
+
+after about 10 minutes...
+
+sig :: github.com/acud/po-compare » curl https://bee-20.gateway.ethswarm.org/bytes/bd03e706b995d7d039dd1296b5379243cd8d5885c77a01486f31bb48513f8e61
+Ej���iL2�K%
+
+but also, some that did work no longer work
+
+q: can i check this if gc has kicked in on nodes?
+
+resolve: to improve retry logic - keep checking over and over to make sure retry logic works
+resolve: to improve retry approach - each retry should be it's own thread with backoff logic
+resolve: to add check to see if content is still available after some time
+
+q: is gc happening on gw nodes? we need to think about monitoring the min age of the gc'd chunks. if the age is < eg. 1hr then we are having a problem
+
+
+resolve to improve stats
+	- each roundtrip get time
+	- number of retries
+	- each roundrip after some time
+		- perhaps specifically for onces where one get has failed
+
+note: file contents is not being saved at the moment
+
+sig :: github.com/acud/po-compare 130 » curl https://bee-3.gateway.ethswarm.org/bytes/b9303fbcf8fd47d9536c4908012a94c51edd95a49865349fa25cc8598204b22e
+�q�H��G��%
+sig :: github.com/acud/po-compare » curl https://bee-1.gateway.ethswarm.org/bytes/b9303fbcf8fd47d9536c4908012a94c51edd95a49865349fa25cc8598204b22e
+{"message":"Not Found","code":404}
+
+
+q: who should have this chunk and did they ever see it? was it garbage collected?
+
+q: gc logs should we keep them
+
+stillNotWorking 109
+
+1. log
+
+back to staging big test to be sure...
+
+resolve: wait for syncing to complete before sending more into the network
+
+
+...
+
+added resolutions to make tests more robust
+
+ae4c0b2d1b16ec106a0c65bacdd9af42a090a81c
+
+postTo http://localhost:1633/bytes
+postType application/octet-stream
+tmpFolder tmp
+getFromTemplate https://bee-%d.gateway.ethswarm.org/bytes/%s
+postSize 10
+batchSize 10000
+getTestTimoutSecs 100
+sleepBetweenBatchMs 300
+maxNode 69
+1 / 10000
+2 / 10000
+3 / 10000
+
+8.log
+
+all success
+
+
+
+....
+
+
+postTo http://localhost:1633/bytes
+postType application/octet-stream
+tmpFolder tmp
+getFromTemplate https://bee-%d.gateway.ethswarm.org/bytes/%s
+postSize 10000000
+batchSize 10
+getTestTimoutSecs 100
+sleepBetweenBatchMs 300
+maxNode 69
+
+success!!
+
+....
+
+updated to 0.4.1-e32b3525
+
+success!!
+
+
+postTo http://localhost:1633/bytes
+postType application/octet-stream
+tmpFolder tmp
+getFromTemplate https://bee-%d.gateway.ethswarm.org/bytes/%s
+postSize 10000000
+batchSize 10
+getTestTimoutSecs 100
+sleepBetweenBatchMs 300
+maxNode 69
+1 / 10
+2 / 10
+3 / 10
+
+...
+
+query: is this now working because the requests are always straight afterwards??
+
+...
+
+postTo http://localhost:1633/bytes
+postType application/octet-stream
+tmpFolder tmp
+getFromTemplate https://bee-%d.gateway.ethswarm.org/bytes/%s
+postSize 50000000
+batchSize 2
+getTestTimoutSecs 100
+sleepBetweenBatchMs 300
+maxNode 69
+1 / 2
+2 / 2
+Completed  70
+Completed  70
+cr complete
+waiting to start retries 0
+
+...
+
+postTo http://localhost:1633/bytes
+postType application/octet-stream
+tmpFolder tmp
+getFromTemplate https://bee-%d.gateway.ethswarm.org/bytes/%s
+postSize 100000000
+batchSize 4
+getTestTimoutSecs 100
+sleepBetweenBatchMs 300
+maxNode 69
+1 / 4
+posted 14c838bd43a9bc6ff72cc049629b7951dd17b36fb9a216a56c4057ec43a170d6
+2 / 4
+posted 8bd983b38f2c3b61432c8972e7b9cbd386fee97e1f056b3d8ec768ce292da4ab
+3 / 4
+posted ff6b13c74062be5d22c297477088e0696d978b9435f051c11bcf9d7b4b975677
+4 / 4
+posted 8567b368bed0757ce87c58c8ff70c9ffea43ba69dd412e00553c94f596199cd7
+Completed  70
+Completed  70
+Completed  70
+Completed  70
+cr complete
+waiting to start retries 0
+
+success!
+
+...
+
+sig :: ~ » bee version
+0.4.1-e32b3525
+sig :: ~ » curl --connect-timeout 100 https://bee-1.gateway.ethswarm.org/bytes/14c838bd43a9bc6ff72cc049629b7951dd17b36fb9a216a56c4057ec43a170d6 > /dev/null
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 95.3M  100 95.3M    0     0   560k      0  0:02:54  0:02:54 --:--:--  472k
+sig :: ~ » curl --connect-timeout 100 https://bee-12.gateway.ethswarm.org/bytes/14c838bd43a9bc6ff72cc049629b7951dd17b36fb9a216a56c4057ec43a170d6 > /dev/null
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 95.3M  100 95.3M    0     0   986k      0  0:01:38  0:01:38 --:--:-- 1079k
+sig :: ~ » curl --connect-timeout 100 https://bee-16.gateway.ethswarm.org/bytes/14c838bd43a9bc6ff72cc049629b7951dd17b36fb9a216a56c4057ec43a170d6 > /dev/null
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 95.3M  100 95.3M    0     0   879k      0  0:01:51  0:01:51 --:--:--  251k
+sig :: ~ » curl --connect-timeout 100 https://bee-16.gateway.ethswarm.org/bytes/14c838bd43a9bc6ff72cc049629b7951dd17b36fb9a216a56c4057ec43a170d6 > /dev/null
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 95.3M  100 95.3M    0     0   525k      0  0:03:05  0:03:05 --:--:-- 9841k
+sig :: ~ » curl --connect-timeout 100 https://bee-46.gateway.ethswarm.org/bytes/14c838bd43a9bc6ff72cc049629b7951dd17b36fb9a216a56c4057ec43a170d6 > /dev/null
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 95.3M  100 95.3M    0     0   164k      0  0:09:54  0:09:54 --:--:--  321k
+sig :: ~ » curl --connect-timeout 100 https://bee-49.gateway.ethswarm.org/bytes/14c838bd43a9bc6ff72cc049629b7951dd17b36fb9a216a56c4057ec43a170d6 > /dev/null
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 95.3M  100 95.3M    0     0   513k      0  0:03:10  0:03:10 --:--:-- 1048k
+sig :: ~ » curl --connect-timeout 100 https://bee-55.gateway.ethswarm.org/bytes/14c838bd43a9bc6ff72cc049629b7951dd17b36fb9a216a56c4057ec43a170d6 > /dev/null
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 95.3M  100 95.3M    0     0  1213k      0  0:01:20  0:01:20 --:--:-- 1155k
+sig :: ~ » curl --connect-timeout 100 https://bee-55.gateway.ethswarm.org/bytes/14c838bd43a9bc6ff72cc049629b7951dd17b36fb9a216a56c4057ec43a170d6 > /dev/null
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 95.3M  100 95.3M    0     0  3920k      0  0:00:24  0:00:24 --:--:-- 9592k
+sig :: ~ » curl --connect-timeout 100 https://bee-52.gateway.ethswarm.org/bytes/14c838bd43a9bc6ff72cc049629b7951dd17b36fb9a216a56c4057ec43a170d6 > /dev/null
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 95.3M  100 95.3M    0     0   231k      0  0:07:01  0:07:01 --:--:--  517k
+sig :: ~ » curl --connect-timeout 100 https://bee-32.gateway.ethswarm.org/bytes/14c838bd43a9bc6ff72cc049629b7951dd17b36fb9a216a56c4057ec43a170d6 > /dev/null
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 95.3M  100 95.3M    0     0   160k      0  0:10:06  0:10:06 --:--:--  224k
+sig :: ~ » curl --connect-timeout 100 https://bee-32.gateway.ethswarm.org/bytes/14c838bd43a9bc6ff72cc049629b7951dd17b36fb9a216a56c4057ec43a170d6 > /dev/null
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 95.3M  100 95.3M    0     0  9230k      0  0:00:10  0:00:10 --:--:-- 10.7M
+sig :: ~ » curl --connect-timeout 100 https://bee-12.gateway.ethswarm.org/bytes/14c838bd43a9bc6ff72cc049629b7951dd17b36fb9a216a56c4057ec43a170d6 > /dev/null
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 95.3M  100 95.3M    0     0  7688k      0  0:00:12  0:00:12 --:--:-- 9151k
+
+updated to 0.4.1 - ,uch faster retrieval
+
+sig :: ~ » curl --connect-timeout 100 https://bee-1.gateway.ethswarm.org/bytes/14c838bd43a9bc6ff72cc049629b7951dd17b36fb9a216a56c4057ec43a170d6 > /dev/null
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 95.3M  100 95.3M    0     0  8839k      0  0:00:11  0:00:11 --:--:--  9.9M
+sig :: ~ » curl --connect-timeout 100 https://bee-41.gateway.ethswarm.org/bytes/14c838bd43a9bc6ff72cc049629b7951dd17b36fb9a216a56c4057ec43a170d6 > /dev/null
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 95.3M  100 95.3M    0     0   969k      0  0:01:40  0:01:40 --:--:-- 1565k
+sig :: ~ »
+
+
+
+
+
+Notes
+-----
+
+1. does not show still pushing if not trace
+2. does not show problems with blockchain endpoints if there aren't working
+3. synced {3693 3693 0 3693 4350 3693} // sent figure is consistently wrong?
+4. incorrect error if endpoint not specified (no factory contract...)
+5. gc is not in logs can it be please
+6. if overloaded with requests bee fails
+panic: runtime error: slice bounds out of range [:16] with capacity 0
+
+goroutine 4554370 [running]:
+github.com/ethersphere/bee/pkg/localstore.New.func4(0xc0025394a9, 0x20, 0x27, 0x0, 0x0, 0x0, 0x0, 0x164f5a6988f7b730, 0x0, 0x0, ...)
+	github.com/ethersphere/bee/pkg/localstore/localstore.go:233 +0xd1
+github.com/ethersphere/bee/pkg/shed.Index.Get(0xc0003060d0, 0xc0036e8d19, 0x1, 0x1, 0xc00041f940, 0xc003cc6bd0, 0x223c9f0, 0x223c9f8, 0xc0025394a9, 0x20, ...)
+	github.com/ethersphere/bee/pkg/shed/index.go:154 +0x25d
+github.com/ethersphere/bee/pkg/localstore.(*DB).SubscribePush.func1.1(0xc0025394a9, 0x20, 0x27, 0x0, 0x0, 0x0, 0x0, 0x164f5a6988f7b730, 0x0, 0x0, ...)
+	github.com/ethersphere/bee/pkg/localstore/subscription_push.go:71 +0x1a3
+github.com/ethersphere/bee/pkg/shed.Index.Iterate(0xc0003060d0, 0xc0036e91b9, 0x1, 0x1, 0xc00041fa00, 0xc003cc6f90, 0x223c970, 0x223c978, 0xc000eefea0, 0xc000eefe30, ...)
+	github.com/ethersphere/bee/pkg/shed/index.go:381 +0x372
+github.com/ethersphere/bee/pkg/localstore.(*DB).SubscribePush.func1(0xc00010a000, 0xc000dee4e0, 0xc000dee540, 0xc000dee5a0, 0x24043a0, 0xc00019c180)
+	github.com/ethersphere/bee/pkg/localstore/subscription_push.go:69 +0x37a
+created by github.com/ethersphere/bee/pkg/localstore.(*DB).SubscribePush
+	github.com/ethersphere/bee/pkg/localstore/subscription_push.go:49 +0x1d4
+
+7. no way to stop orphan pushes
+8. gateway vuln -> upload many hashes in self-neighbourhood then request from gateways
+9. ux should be able to query tag by hash
+10. just one blockchain endpoint by default? options for multiple eg. real ENS fake Incentives
+11. cause SE to index ens names at gateway
