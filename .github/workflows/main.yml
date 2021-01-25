@@ -20,7 +20,7 @@ jobs:
           context: .
           file: ./Dockerfile
           platforms: linux/amd64
-          push: galse
+          push: false
           tags: user/app:latest
       - uses: addnab/docker-run-action@v1
         with:
