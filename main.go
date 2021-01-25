@@ -19,23 +19,7 @@ import (
 	"sort"
 )
 
-// const (
-// 	concurrentUploads = true //as long as the pusher keeps up with the posts, it's fine and much quicker to do this, for bigger uploads, use non-concurrent uploads ;)
-// 	postTo = "http://localhost:1733/bytes"
-// 	getTagStatusTemplate = "http://localhost:1733/tags/%s"
-// 	postType = "application/octet-stream"
-// 	tmpFolder = "tmp"
-// 	getFromTemplate = "https://bee-%d.gateway.staging.ethswarm.org/bytes/%s"
-// 	maxNode = 19 //presuming they start at 0
-
-// 	postSize = 10
-// 	batchSize =  5000
-// 	getTestTimoutSecs = 100
-// 	sleepBetweenBatchMs = 100
-// 	sleepBetweenRetryMs = 5000
-// 	maxRetryAttempts = 3
-// )
-
+// main
 // const (
 // 	concurrentUploads = false
 // 	postTo = "http://localhost:1633/bytes"
@@ -46,7 +30,7 @@ import (
 // 	getFromTemplate = "https://bee-%d.gateway.ethswarm.org/bytes/%s"
 // 	maxNode = 69 //presuming they start at 0
 // 	postSize = 0.4 * 1000 * 1000
-// attemptsAfterSent = 10
+// maxAttemptsAfterSent = 10
 // 	batchSize =  2
 // 	getTestTimoutSecs = 100
 // 	timeBeforeGetSecs = 1
@@ -59,13 +43,13 @@ const (
 	concurrentUploads = false
 	postTo = "http://localhost:1633/bytes"
 	getTagStatusTemplate = "http://localhost:1633/tags/%s"
-	promGateway = "http://localhost:9091"
+	promGateway = ""
 	postType = "application/octet-stream"
 	tmpFolder = "tmp"
 	getFromTemplate = "https://bee-%d.gateway.staging.ethswarm.org/bytes/%s"
 	maxNode = 19 //presuming they start at 0
-	postSize = 0.5 * 1000 * 1000
-	attemptsAfterSent = 10
+	postSize = 0.1 * 1000 * 1000
+	maxAttemptsAfterSent = 10
 	batchSize =  3
 	getTestTimoutSecs = 100
 	timeBeforeGetSecs = 30
@@ -73,6 +57,7 @@ const (
 	sleepBetweenRetryMs = 1000
 	maxRetryAttempts = 5
 )
+
 
 
 var (
@@ -119,6 +104,9 @@ var (
 )
 
 func obh(mmtx sync.Mutex, metricName string, jobId string, m prometheus.Histogram, start time.Time, ref string){
+	if promGateway == ""{
+		return
+	}
 	mmtx.Lock()
 
 	m.Observe(time.Since(start).Seconds())
@@ -132,27 +120,11 @@ func obh(mmtx sync.Mutex, metricName string, jobId string, m prometheus.Histogra
 	mmtx.Unlock()
 }
 
-// func obg(metricName string, jobId string, m prometheus.Histogram, start time.Time, ref string){
-// 	m.Observe(time.Since(start).Seconds())
-// 	if err := push.New(promGateway, jobId).
-// 		Collector(m).
-// 		Grouping("refy", "b").
-// 		Push(); err != nil {
-// 			fmt.Println("Could not push completion time to Pushgateway:", err)
-// 		}
-// }
-
-// func obs(metricName string, jobId string, m prometheus.Histogram, start time.Time, ref string){
-// 	m.Observe(time.Since(start).Seconds())
-// 	if err := push.New(promGateway, jobId).
-// 		Collector(m).
-// 		Grouping("refz", "c").
-// 		Push(); err != nil {
-// 			fmt.Println("Could not push completion time to Pushgateway:", err)
-// 		}
-// }
 
 func obg(metricName string, jobId string, m prometheus.Gauge){
+	if promGateway == ""{
+		return
+	}
 	m.Inc()
 	if err := push.New(promGateway, jobId).
 		Collector(m).
@@ -237,7 +209,7 @@ func postTest(mmtx sync.Mutex, i int, size int64) string {
 
 		lastSynced = tr.Synced
 
-		if attemptAfterSent > attemptsAfterSent {
+		if attemptAfterSent > maxAttemptsAfterSent {
 			fmt.Println("still not synced, abandoning... ", i, tr)
 			obg("syncFailedGauge", timestamp, syncFailedGauge)
 			syncing = false
