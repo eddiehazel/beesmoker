@@ -1,6 +1,5 @@
-bee --config /go/src/app/bee-staging.yml start
+bee --config /go/src/app/bee-staging.yml start &
 while ! nc -vz localhost 1633; do sleep 1; done
 go get -d -v ./...
 go install -v ./...
 app
-cat /tmp/bee.log
