@@ -1,0 +1,38 @@
+api-addr: :1633
+bootnode:
+- /dnsaddr/bootnode.staging.ethswarm.org
+clef-signer-enable: false
+clef-signer-endpoint: ""
+config: /Users/sig/.bee.yaml
+cors-allowed-origins:
+- '*'
+data-dir: /Users/sig/.bee18
+db-capacity: "5000000"
+debug-api-addr: :1635
+debug-api-enable: true
+gateway-mode: false
+global-pinning-enable: false
+help: false
+nat-addr: ""
+network-id: "2"
+p2p-addr: :1634
+p2p-quic-enable: false
+p2p-ws-enable: false
+password: x
+password-file: ""
+payment-early: "10000"
+payment-threshold: "100000"
+payment-tolerance: "10000"
+resolver-options:
+- https://mainnet.infura.io/v3/ea1c46ad11f2473b92bfeca7f4ee53d2
+standalone: false
+swap-enable: true
+swap-endpoint: https://goerli.infura.io/v3/ea1c46ad11f2473b92bfeca7f4ee53d2
+swap-factory-address: ""
+swap-initial-deposit: "100000000"
+tracing-enable: false
+tracing-endpoint: 127.0.0.1:6831
+tracing-service-name: bee
+verbosity: "5"
+welcome-message: ""
+
