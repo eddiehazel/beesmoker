@@ -1,0 +1,17 @@
+name: run script
+
+on:
+  push:
+
+jobs:
+  buildx:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker/build-push-action@v1
+        with:
+          repository: test-image
+          push: false
+      - uses: addnab/docker-run-action@v1
+        with:
+          image: test-image:latest
+          run: "sh /go/src/app/run-bee.sh"
