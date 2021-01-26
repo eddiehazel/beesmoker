@@ -52,9 +52,9 @@ const (
 	maxAttemptsAfterSent = 10
 	batchSize =  10
 	getTestTimoutSecs = 100
-	timeBeforeGetSecs = 20
+	timeBeforeGetSecs = 60
 	sleepBetweenBatchMs = 300
-	sleepBetweenRetryMs = 1000
+	sleepBetweenRetryMs = 10000
 	maxRetryAttempts = 5
 )
 
