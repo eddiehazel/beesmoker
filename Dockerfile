@@ -12,4 +12,6 @@ RUN go install -v ./...
 RUN wget -q -O - https://raw.githubusercontent.com/ethersphere/bee/master/install.sh | TAG=v0.4.2 bash
 RUN mkdir /go/src/app/data
 
+COPY ./run-bee.sh ./run-bee.sh
+
 CMD ["bash", "/go/src/app/run-bee.sh"]
