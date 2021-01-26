@@ -48,11 +48,11 @@ const (
 	tmpFolder = "tmp"
 	getFromTemplate = "https://bee-%d.gateway.staging.ethswarm.org/bytes/%s"
 	maxNode = 19 //presuming they start at 0
-	postSize = 0.001 * 1000 * 1000
-	maxAttemptsAfterSent = 10
-	batchSize =  500
+	postSize = 1 * 1000 * 1000
+	maxAttemptsAfterSent = 50
+	batchSize =  25
 	getTestTimoutSecs = 100
-	timeBeforeGetSecs = 30
+	timeBeforeGetSecs = 20
 	sleepBetweenBatchMs = 300
 	sleepBetweenRetryMs = 1000
 	maxRetryAttempts = 5
