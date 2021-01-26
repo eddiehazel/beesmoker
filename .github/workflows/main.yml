@@ -4,11 +4,9 @@ on:
   push:
 
 jobs:
-  my_job:
-    name: deploy to staging
-    runs:
-      using: 'docker'
-      image: 'significance/sig_smoke_tests_go:v1'
+  smoke_test:
+    name: run smoke tests
+    runs-on: ubuntu-latest
     steps:
       - name: run tests
-        run: "bash /go/src/app/run-bee.sh"
+        run: "docker run --rm -ti significance/sig_smoke_tests_go:v1"
