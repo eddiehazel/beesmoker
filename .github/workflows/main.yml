@@ -9,3 +9,6 @@ jobs:
     runs:
       using: 'docker'
       image: 'significance/sig_smoke_tests_go:v1'
+    steps:
+      - name: run tests
+        run: "bash /go/src/app/run-bee.sh"
