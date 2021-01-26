@@ -9,4 +9,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: run tests
-        run: "docker run --rm -ti significance/sig_smoke_tests_go:v1"
+        run: "docker run --rm significance/sig_smoke_tests_go:v1"
