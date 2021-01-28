@@ -1,4 +1,5 @@
-name: run smoke tests.....
+environment: bee
+  name: run smoke tests.....
 
 on:
   push:
