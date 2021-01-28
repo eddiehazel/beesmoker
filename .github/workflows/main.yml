@@ -7,11 +7,10 @@ on:
 
 jobs:
   smoke_test:
-    name: run smoke tests
+    env: 
+      FAUCET_TOKEN: ${{ secrets.FAUCET_TOKEN }}
     runs-on: ubuntu-latest
     steps:
       - name: run tests
-        env: 
-          FAUCET_TOKEN: ${{ secrets.FAUCET_TOKEN }}
         run: |
           docker run --rm significance/sig_smoke_tests_go:v26
