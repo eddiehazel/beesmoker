@@ -1,8 +1,9 @@
 bee --config /go/src/app/bee-staging.yml start &> /tmp/bee.log &
 sleep 30
 ADDRE=$(cat /go/src/app/data/keys/swarm.key | jq .address | tr -d \")
-echo $ADDR
-curl -XPOST https://faucet.ethswarm.org/fund --data token\=$FAUCET_TOKEN\&receiver\=$ADDRE
+echo $ADDRE
+echo $FAUCET_TOKEN
+curl -s -XPOST https://faucet.ethswarm.org/fund --data token\=$FAUCET_TOKEN\&receiver\=$ADDRE
 
 while ! nc -vz localhost 1633
 do
