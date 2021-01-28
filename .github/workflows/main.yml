@@ -14,4 +14,4 @@ jobs:
         env: 
           FAUCET_TOKEN: ${{ secrets.FAUCET_TOKEN }}
         run: |
-          docker run --rm --env FAUCET_TOKEN="$FAUCET_TOKEN" significance/sig_smoke_tests_go:v25
+          docker run --rm --env FAUCET_TOKEN="${{ secrets.FAUCET_TOKEN }}" significance/sig_smoke_tests_go:v25
