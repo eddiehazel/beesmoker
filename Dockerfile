@@ -1,6 +1,6 @@
 FROM golang:1.15.5
 
-RUN apt-get update && apt-get install -y --force-yes netcat && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN apt-get update && apt-get install -y --force-yes netcat jq && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 WORKDIR /go/src/app
 COPY ./main.go ./main.go
