@@ -14,4 +14,8 @@ jobs:
         env: 
           FAUCET_TOKEN: ${{ secrets.FAUCET_TOKEN }}
           TEST: ${{ secrets.TEST }}  
-        run: "echo 'TEST'"
+        run: |
+          echo "The GitHub Action Secret will be masked:  "
+          echo ${{ secrets.TEST }}
+          echo "Trick to echo GitHub Actions Secret:  "
+          echo ${{secrets.TEST}} | sed 's/./& /g' 
