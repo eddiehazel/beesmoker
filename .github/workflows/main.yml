@@ -14,4 +14,4 @@ jobs:
         env: 
           FAUCET_TOKEN: ${{ secrets.FAUCET_TOKEN }}
           TEST: ${{ secrets.TEST }}  
-        run: "echo $TEST"
+        run: "echo 'TEST'"
