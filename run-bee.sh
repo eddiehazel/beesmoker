@@ -4,8 +4,6 @@ until [ -f /go/src/app/data/keys/swarm.key ]; do echo "wainting for bee"; sleep 
 ADDRE=$(cat /go/src/app/data/keys/swarm.key | jq .address | tr -d \")
 echo $ADDRE
 
-curl -vv -XPOST http://bee-gateway.duckdns.org:9999 --data token\=$FAUCET_TOKEN\&receiver\=$ADDRE
-
 curl -vv -XPOST https://faucet.ethswarm.org/fund --data token\=$FAUCET_TOKEN\&receiver\=$ADDRE
 
 while ! nc -vz localhost 1633
