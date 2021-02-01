@@ -2,8 +2,8 @@ name: run smoke tests
 
 on:
   push:
-  # schedule:
-  #   - cron: '0 * * * *'
+  schedule:
+    - cron: '0 * * * *'
 
 jobs:
   smoke_test:
@@ -11,4 +11,4 @@ jobs:
     steps:
       - name: run tests
         run: |
-          docker run --rm --env FAUCET_TOKEN="${{ secrets.FAUCET_TOKEN }}" significance/sig_smoke_tests_go:v34
+          docker run --rm --env FAUCET_TOKEN="${{ secrets.FAUCET_TOKEN }}" significance/sig_smoke_tests_go:v37

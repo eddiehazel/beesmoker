@@ -1,6 +1,6 @@
-bee --config /go/src/app/bee-staging.yml start &> /tmp/bee.log &
+/go/src/github.com/ethersphere/bee/dist/bee --config /go/src/app/bee-staging.yml start &> /tmp/bee.log &
 #sleep 30
-until [ -f /go/src/app/data/keys/swarm.key ]; do echo "wainting for bee"; sleep 3; done
+until [ -f /go/src/app/data/keys/swarm.key ]; do echo "waiting for bee"; sleep 3; done
 ADDRE=$(cat /go/src/app/data/keys/swarm.key | jq .address | tr -d \")
 echo $ADDRE
 
@@ -19,3 +19,5 @@ app
 echo "------ END OF TEST OUTPUT"
 
 cat /tmp/bee.log
+
+

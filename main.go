@@ -48,15 +48,34 @@ const (
 	tmpFolder = "tmp"
 	getFromTemplate = "https://bee-%d.gateway.staging.ethswarm.org/bytes/%s"
 	maxNode = 19 //presuming they start at 0
-	postSize = 0.3 * 1000 * 1000
+	postSize = 0.001 * 1000 * 1000
 	maxAttemptsAfterSent = 100
-	batchSize =  10
+	batchSize =  100
 	getTestTimoutSecs = 100
 	timeBeforeGetSecs = 60
 	sleepBetweenBatchMs = 300
 	sleepBetweenRetryMs = 10000
 	maxRetryAttempts = 5
 )
+
+// const (
+// 	concurrentUploads = false
+// 	postTo = "http://localhost:1633/bytes"
+// 	getTagStatusTemplate = "http://localhost:1633/tags/%s"
+// 	promGateway = ""
+// 	postType = "application/octet-stream"
+// 	tmpFolder = "tmp"
+// 	getFromTemplate = "http://bee-%d.elad.staging.ethswarm.org/bytes/%s"
+// 	maxNode = 4 //presuming they start at 0
+// 	postSize = 0.3 * 1000 * 1000
+// 	maxAttemptsAfterSent = 20
+// 	batchSize =  10
+// 	getTestTimoutSecs = 100
+// 	timeBeforeGetSecs = 60
+// 	sleepBetweenBatchMs = 300
+// 	sleepBetweenRetryMs = 10000
+// 	maxRetryAttempts = 5
+// ) 
 
 
 
@@ -262,19 +281,18 @@ func getTest(mmtx sync.Mutex, ref string, node int) (bool, TestResult) {
 		return false, TestResult{Success: false, Node:node, Url:url, Reference: ref, Status: 0, CompletedTime: 0}
 	}
 
-	if len(body) != postSize {
-		fmt.Println("error: retrieved file is not correct size, retrieved:", len(body), "actual:", int(postSize))
-		return false, TestResult{Success: false, Node:node, Url:url, Reference: ref, Status: 0, CompletedTime: 0}
-	}
-
 	suc := resp.StatusCode == 200
-
-	testResult := TestResult{Success: true, Node: node, Url: url, Reference: ref, Status: resp.StatusCode, CompletedTime: completedTime}
 
 	if suc != true {
 		return false, TestResult{Success: false, Node:node, Url:url, Reference: ref, Status: resp.StatusCode}
 	}
 
+	if len(body) != postSize {
+		fmt.Println("error: retrieved file is not correct size, retrieved:", len(body), "actual:", int(postSize))
+		return false, TestResult{Success: false, Node:node, Url:url, Reference: ref, Status: 0, CompletedTime: 0}
+	}
+
+	testResult := TestResult{Success: true, Node: node, Url: url, Reference: ref, Status: resp.StatusCode, CompletedTime: completedTime}
 
 	obh(mmtx, "responseDuration", timestamp, responseDuration, start, ref)
 
@@ -398,15 +416,23 @@ func main(){
 	}
 
 	//print config
+
+	fmt.Println("concurrentUploads", concurrentUploads)
 	fmt.Println("postTo", postTo)
+	fmt.Println("getTagStatusTemplate", getTagStatusTemplate)
+	fmt.Println("promGateway", promGateway)
 	fmt.Println("postType", postType)
 	fmt.Println("tmpFolder", tmpFolder)
 	fmt.Println("getFromTemplate", getFromTemplate)
+	fmt.Println("maxNode", maxNode)
 	fmt.Println("postSize", postSize)
+	fmt.Println("maxAttemptsAfterSent", maxAttemptsAfterSent)
 	fmt.Println("batchSize", batchSize)
 	fmt.Println("getTestTimoutSecs", getTestTimoutSecs)
+	fmt.Println("timeBeforeGetSecs", timeBeforeGetSecs)
 	fmt.Println("sleepBetweenBatchMs", sleepBetweenBatchMs)
-	fmt.Println("maxNode", maxNode)
+	fmt.Println("sleepBetweenRetryMs", sleepBetweenRetryMs)
+	fmt.Println("maxRetryAttempts", maxRetryAttempts)
 
 	var mmtx sync.Mutex
 	timestamp = strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
