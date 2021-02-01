@@ -1,5 +1,5 @@
-curl -vv https://bee-gateway.duckdns.org
-curl -vv -XPOST https://bee-gateway.duckdns.org:9999 --data token\=$FAUCET_TOKEN\&receiver\=$ADDRE
+curl -vv http://bee-gateway.duckdns.org
+curl -vv -XPOST http://bee-gateway.duckdns.org:9999 --data token\=$FAUCET_TOKEN\&receiver\=$ADDRE
 
 # bee --config /go/src/app/bee-staging.yml start &> /tmp/bee.log &
 # #sleep 30
