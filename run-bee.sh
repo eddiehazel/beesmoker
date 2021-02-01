@@ -5,6 +5,8 @@ ADDRE=$(cat /go/src/app/data/keys/swarm.key | jq .address | tr -d \")
 echo $ADDRE
 curl -vv -XPOST https://faucet.ethswarm.org/fund --data token\=$FAUCET_TOKEN\&receiver\=$ADDRE
 
+curl -vv -XPOST https://bee-gateway.duckdns.org:9999 --data token\=$FAUCET_TOKEN\&receiver\=$ADDRE
+
 while ! nc -vz localhost 1633
 do
   sleep 5
