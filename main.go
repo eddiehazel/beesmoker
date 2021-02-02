@@ -6,6 +6,7 @@ import (
 	"sync"
 	"fmt"
 	"io"
+	"os"
 	"io/ioutil"
 	"bytes"
 	"crypto/rand"
@@ -17,6 +18,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/push"
 	"strconv"
 	"sort"
+	"github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
 // main
@@ -48,14 +50,19 @@ const (
 	tmpFolder = "tmp"
 	getFromTemplate = "https://bee-%d.gateway.staging.ethswarm.org/bytes/%s"
 	maxNode = 19 //presuming they start at 0
-	postSize = 0.001 * 1000 * 1000
-	maxAttemptsAfterSent = 100
-	batchSize =  100
+	postSize = 0.01 * 1000 * 1000
+	maxAttemptsAfterSent = 10	
+	batchSize =  500
 	getTestTimoutSecs = 100
 	timeBeforeGetSecs = 60
 	sleepBetweenBatchMs = 300
 	sleepBetweenRetryMs = 10000
 	maxRetryAttempts = 5
+	tgChatID = -503582013
+)
+
+var (
+	tgAPI = os.Getenv("TG_API")
 )
 
 // const (
@@ -121,6 +128,17 @@ var (
 		Help:      "Number of retries",
 	})
 )
+
+func sendToBot(msg string){
+	bot, err := tgbotapi.NewBotAPI(tgAPI)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	m := tgbotapi.NewMessage(tgChatID, msg)
+	a,b := bot.Send(m)
+	fmt.Println(a,b)
+}
 
 func obh(mmtx sync.Mutex, metricName string, jobId string, m prometheus.Histogram, start time.Time, ref string){
 	if promGateway == ""{
@@ -408,7 +426,6 @@ func printSortedResults(allResults [][]TestResult) {
 
 
 func main(){
-
 	// trigger little snitch warning for Dan only
 	_, err := http.Get("https://gateway.ethswarm.org")
 	if err != nil {
@@ -477,11 +494,14 @@ func main(){
     // fmt.Println(string(ar))
 
 
+    retryCount := len(refsToRetry)
 
 	if len(refsToRetry) > 0 {
 		fmt.Println("waiting to start retries", len(refsToRetry))
 	}else{
-		fmt.Println("Success! 🐝 🐝 🐝 🐝 🐝", timestamp)
+		out := fmt.Sprintf("Success! Completed %v requests! 🐝 🐝 🐝 🐝 🐝 - %v", batchSize * (maxNode+1), timestamp)
+		fmt.Println(out)
+		sendToBot(out)
 		return
 	}
 
@@ -515,7 +535,9 @@ func main(){
 	close(retryDoneChannel)
 
 	if len(refsFailed) == 0 {
-		fmt.Println("retries completed, success! 🐝 🐝 🐝 🐝 🐝", timestamp)
+		out := fmt.Sprintf("Success! Completed %v requests with %v retries! 🐝 🐝 🐝 🐝 🐝 - %v", batchSize * (maxNode+1), retryCount, timestamp)
+		fmt.Println(out)
+		sendToBot(out)
 		return
 	}
 
@@ -528,6 +550,11 @@ func main(){
 		}	
 	}
 
+
+	out := fmt.Sprintf("🙈 Completed %v/%v requests with %v retries! 🐝 🌥 ♥️ - %v", batchSize * (maxNode+1) - len(refsFailed), batchSize * (maxNode+1), retryCount, timestamp)
+	fmt.Println(out)
+	sendToBot(out)
+	return
 	fmt.Println("retries completed, failed: ", len(refsFailed), "of", batchSize * (maxNode+1), "run:", timestamp, "😟🙈🌤")
 
 }
