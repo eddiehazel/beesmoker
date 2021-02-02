@@ -52,7 +52,7 @@ const (
 	maxNode = 19 //presuming they start at 0
 	postSize = 0.01 * 1000 * 1000
 	maxAttemptsAfterSent = 10	
-	batchSize =  500
+	batchSize =  50
 	getTestTimoutSecs = 100
 	timeBeforeGetSecs = 60
 	sleepBetweenBatchMs = 300

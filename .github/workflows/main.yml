@@ -11,4 +11,4 @@ jobs:
     steps:
       - name: run tests
         run: |
-          docker run --rm --env FAUCET_TOKEN="${{ secrets.FAUCET_TOKEN }}" --env TG_API="${{ secrets.TG_API }}" significance/sig_smoke_tests_go:v37
+          docker run --rm --env FAUCET_TOKEN="${{ secrets.FAUCET_TOKEN }}" --env TG_API="${{ secrets.TG_API }}" significance/sig_smoke_tests_go:v42
