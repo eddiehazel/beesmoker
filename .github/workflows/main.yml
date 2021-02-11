@@ -1,9 +1,9 @@
-name: run smoke tests.
+name: run smoke tests..
 
 on:
   push:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '*/20 * * * *'
 
 jobs:
   smoke_test:
