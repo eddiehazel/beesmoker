@@ -26,21 +26,23 @@ import (
 // 	concurrentUploads = false
 // 	postTo = "http://localhost:1633/bytes"
 // 	getTagStatusTemplate = "http://localhost:1633/tags/%s"
-// 	promGateway = "http://localhost:9091"
+// 	promGateway = ""
 // 	postType = "application/octet-stream"
 // 	tmpFolder = "tmp"
 // 	getFromTemplate = "https://bee-%d.gateway.ethswarm.org/bytes/%s"
 // 	maxNode = 69 //presuming they start at 0
-// 	postSize = 0.4 * 1000 * 1000
-// maxAttemptsAfterSent = 10
-// 	batchSize =  2
+// 	postSize = 1000
+// 	maxAttemptsAfterSent = 10	
+// 	batchSize =  1000
 // 	getTestTimoutSecs = 100
-// 	timeBeforeGetSecs = 1
+// 	timeBeforeGetSecs = 60
 // 	sleepBetweenBatchMs = 300
-// 	sleepBetweenRetryMs = 1000
+// 	sleepBetweenRetryMs = 10000
 // 	maxRetryAttempts = 5
+// 	tgChatID = -503582013
 // )
 
+//staging
 const (
 	concurrentUploads = false
 	postTo = "http://localhost:1633/bytes"
@@ -50,9 +52,9 @@ const (
 	tmpFolder = "tmp"
 	getFromTemplate = "https://bee-%d.gateway.staging.ethswarm.org/bytes/%s"
 	maxNode = 19 //presuming they start at 0
-	postSize = 0.01 * 1000 * 1000
+	postSize = 1000
 	maxAttemptsAfterSent = 10	
-	batchSize =  50
+	batchSize =  1000
 	getTestTimoutSecs = 100
 	timeBeforeGetSecs = 60
 	sleepBetweenBatchMs = 300
@@ -64,26 +66,6 @@ const (
 var (
 	tgAPI = os.Getenv("TG_API")
 )
-
-// const (
-// 	concurrentUploads = false
-// 	postTo = "http://localhost:1633/bytes"
-// 	getTagStatusTemplate = "http://localhost:1633/tags/%s"
-// 	promGateway = ""
-// 	postType = "application/octet-stream"
-// 	tmpFolder = "tmp"
-// 	getFromTemplate = "http://bee-%d.elad.staging.ethswarm.org/bytes/%s"
-// 	maxNode = 4 //presuming they start at 0
-// 	postSize = 0.3 * 1000 * 1000
-// 	maxAttemptsAfterSent = 20
-// 	batchSize =  10
-// 	getTestTimoutSecs = 100
-// 	timeBeforeGetSecs = 60
-// 	sleepBetweenBatchMs = 300
-// 	sleepBetweenRetryMs = 10000
-// 	maxRetryAttempts = 5
-// ) 
-
 
 
 var (
@@ -183,7 +165,9 @@ func postTest(mmtx sync.Mutex, i int, size int64) string {
 		panic(err.Error())
 	}
 
-	tagUID := resp.Header["Swarm-Tag-Uid"][0]
+	fmt.Println(resp)
+
+	tagUID := resp.Header["Swarm-Tag"][0]
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
@@ -220,12 +204,10 @@ func postTest(mmtx sync.Mutex, i int, size int64) string {
 
 		type TagResponse struct {
 			Total int
-			Split int
-			Seen int
-			Stored int
-			Sent int
+			Processed int
 			Synced int
 		}
+
 		var tr TagResponse
 		json.Unmarshal(body, &tr)
 		fmt.Println("syncing", r.Reference, i, tr)
@@ -240,7 +222,7 @@ func postTest(mmtx sync.Mutex, i int, size int64) string {
 		}
 
 
-		if lastSynced == tr.Synced && tr.Sent >= tr.Total {
+		if lastSynced == tr.Synced && tr.Processed >= tr.Total {
 			attemptAfterSent++
 		}
 
@@ -308,6 +290,8 @@ func getTest(mmtx sync.Mutex, ref string, node int) (bool, TestResult) {
 	if len(body) != postSize {
 		fmt.Println("error: retrieved file is not correct size, retrieved:", len(body), "actual:", int(postSize))
 		return false, TestResult{Success: false, Node:node, Url:url, Reference: ref, Status: 0, CompletedTime: 0}
+	}else{
+		fmt.Println("retrieved file with correct size", node)
 	}
 
 	testResult := TestResult{Success: true, Node: node, Url: url, Reference: ref, Status: resp.StatusCode, CompletedTime: completedTime}
@@ -426,6 +410,8 @@ func printSortedResults(allResults [][]TestResult) {
 
 
 func main(){
+
+
 	// trigger little snitch warning for Dan only
 	_, err := http.Get("https://gateway.ethswarm.org")
 	if err != nil {

@@ -10,9 +10,9 @@ RUN go get -d -v ./...
 RUN go install -v ./...
 
 RUN mkdir -p /go/src/github.com/ethersphere
-RUN git clone --depth=1 --branch push-clean https://github.com/ethersphere/bee.git /go/src/github.com/ethersphere/bee
+RUN git clone --depth=1 --branch v0.5.0 https://github.com/ethersphere/bee.git /go/src/github.com/ethersphere/bee
 RUN cd /go/src/github.com/ethersphere/bee && make binary
 
 COPY ./run-bee.sh /go/src/app/run-bee.sh
 
-CMD ["bash", "/go/src/app/run-bee.sh"]
+CMD ["/bin/bash", "/go/src/app/run-bee.sh"]
