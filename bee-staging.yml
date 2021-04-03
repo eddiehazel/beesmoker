@@ -1,6 +1,6 @@
 api-addr: :1633
 bootnode:
-- /dnsaddr/bootnode.staging.ethswarm.org
+- /dnsaddr/bootnode.ethswarm.org
 clef-signer-enable: false
 clef-signer-endpoint: ""
 config: /go/src/app/bee-staging.yml 
@@ -14,7 +14,7 @@ gateway-mode: false
 global-pinning-enable: false
 help: false
 nat-addr: ""
-network-id: "2"
+network-id: "1"
 p2p-addr: :1634
 p2p-quic-enable: false
 p2p-ws-enable: false

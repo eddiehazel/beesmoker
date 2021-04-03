@@ -31,9 +31,9 @@ const (
 	tmpFolder = "tmp"
 	getFromTemplate = "https://bee-%d.gateway.ethswarm.org/bytes/%s"
 	maxNode = 9 //presuming they start at 0
-	postSize = 1 * 1000
-	maxAttemptsAfterSent = 10	
-	batchSize =  1000
+	postSize = 1 * 1000 * 1000 * 10
+	maxAttemptsAfterSent = 200	
+	batchSize =  100
 	getTestTimoutSecs = 100
 	timeBeforeGetSecs = 60
 	timeBetweenGetSecs = 2
@@ -41,6 +41,7 @@ const (
 	sleepBetweenRetryMs = 10000
 	maxRetryAttempts = 1
 	tgChatID = -503582013
+	retrieve = false
 )
 
 //staging
@@ -189,7 +190,7 @@ func postTest(mmtx sync.Mutex, i int, size int64) string {
 
 	attemptAfterSent := 0
 	syncing := true
-	lastSynced := 0
+	// lastSynced := 0
 	for syncing == true {
 
 
@@ -212,7 +213,7 @@ func postTest(mmtx sync.Mutex, i int, size int64) string {
 
 		var tr TagResponse
 		json.Unmarshal(body, &tr)
-		fmt.Println("syncing", r.Reference, i, tr)
+		fmt.Println("syncing", tr.Synced, tr.Total, r.Reference, i, tr, attemptAfterSent)
 
 		//just waiting for sent not sync
 		if tr.Synced >= tr.Total {
@@ -224,11 +225,11 @@ func postTest(mmtx sync.Mutex, i int, size int64) string {
 		}
 
 
-		if lastSynced == tr.Synced && tr.Processed >= tr.Total {
+		// if lastSynced == tr.Synced && tr.Processed >= tr.Total {
 			attemptAfterSent++
-		}
+		// }
 
-		lastSynced = tr.Synced
+		// lastSynced = tr.Synced
 
 		if attemptAfterSent > maxAttemptsAfterSent {
 			fmt.Println("still not synced, abandoning... ", i, tr)
@@ -236,7 +237,7 @@ func postTest(mmtx sync.Mutex, i int, size int64) string {
 			syncing = false
 		}
 
-		time.Sleep(1000 * time.Millisecond)
+		time.Sleep(10000 * time.Millisecond)
 
 	}
 
@@ -312,12 +313,17 @@ func arrayContains(r []int, s int) bool{
 	return false
 }
 
-func testRun(mmtx sync.Mutex, i int, resultsChannel chan []TestResult, retryChannel chan TestResult, syncDoneChannel chan bool) {
+func testRun(mmtx sync.Mutex, i int, resultsChannel chan []TestResult, retryChannel chan TestResult, syncDoneChannel chan bool, retrieve bool) {
 
 	ref := postTest(mmtx, i, postSize)
 
 	if concurrentUploads == false {
 		syncDoneChannel <- true
+	}
+
+	if retrieve == false {
+		fmt.Println("not attempting retrieval")
+		return
 	}
 
 	fmt.Println("waiting", timeBeforeGetSecs, "seconds before attempting to retrieve", ref)
@@ -439,6 +445,7 @@ func main(){
 	fmt.Println("sleepBetweenBatchMs", sleepBetweenBatchMs)
 	fmt.Println("sleepBetweenRetryMs", sleepBetweenRetryMs)
 	fmt.Println("maxRetryAttempts", maxRetryAttempts)
+	fmt.Println("retrieve", retrieve)
 
 	var mmtx sync.Mutex
 	timestamp = strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
@@ -454,7 +461,7 @@ func main(){
 		fmt.Println(i + 1, "/", batchSize)
 
 		syncDoneChannel := make(chan bool)
-		go testRun(mmtx, i, resultsChannel, retryChannel, syncDoneChannel)
+		go testRun(mmtx, i, resultsChannel, retryChannel, syncDoneChannel, retrieve)
 
 		if concurrentUploads == false {
 			<- syncDoneChannel
@@ -464,6 +471,10 @@ func main(){
 		}
 	}
 
+
+	if retrieve == false {
+		fmt.Println("run completed, retrieval not attempted")
+	}
 
 	//set up retries
 	var refsToRetry []TestResult
