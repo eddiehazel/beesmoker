@@ -4,7 +4,7 @@ until [ -f /go/src/app/data/keys/swarm.key ]; do echo "waiting for bee"; sleep 3
 ADDRE=$(cat /go/src/app/data/keys/swarm.key | jq .address | tr -d \")
 echo $ADDRE
 
-curl -s -XPOST https://faucet.ethswarm.org/fund-gbzz --data token\=$FAUCET_TOKEN\&receiver\=$ADDRE
+curl -s -XPOST https://gbzz-faucet.duckdns.org/gimmie --data token\=$FAUCET_TOKEN\&address\=0x$ADDRE\&user\=sig-smoke-tests
 
 while ! nc -vz localhost 1633
 do
