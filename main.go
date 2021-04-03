@@ -21,28 +21,7 @@ import (
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
-// main
-// const (
-// 	concurrentUploads = false
-// 	postTo = "http://localhost:1633/bytes"
-// 	getTagStatusTemplate = "http://localhost:1633/tags/%s"
-// 	promGateway = ""
-// 	postType = "application/octet-stream"
-// 	tmpFolder = "tmp"
-// 	getFromTemplate = "https://bee-%d.gateway.ethswarm.org/bytes/%s"
-// 	maxNode = 69 //presuming they start at 0
-// 	postSize = 1000
-// 	maxAttemptsAfterSent = 10	
-// 	batchSize =  1000
-// 	getTestTimoutSecs = 100
-// 	timeBeforeGetSecs = 60
-// 	sleepBetweenBatchMs = 300
-// 	sleepBetweenRetryMs = 10000
-// 	maxRetryAttempts = 5
-// 	tgChatID = -503582013
-// )
 
-//staging
 const (
 	concurrentUploads = false
 	postTo = "http://localhost:1633/bytes"
@@ -50,18 +29,41 @@ const (
 	promGateway = ""
 	postType = "application/octet-stream"
 	tmpFolder = "tmp"
-	getFromTemplate = "https://bee-%d.gateway.staging.ethswarm.org/bytes/%s"
-	maxNode = 19 //presuming they start at 0
-	postSize = 1000 * 1000 * 0.1
+	getFromTemplate = "https://bee-%d.gateway.ethswarm.org/bytes/%s"
+	maxNode = 9 //presuming they start at 0
+	postSize = 1 * 1000
 	maxAttemptsAfterSent = 10	
-	batchSize =  100
+	batchSize =  1000
 	getTestTimoutSecs = 100
 	timeBeforeGetSecs = 60
+	timeBetweenGetSecs = 2
 	sleepBetweenBatchMs = 300
 	sleepBetweenRetryMs = 10000
-	maxRetryAttempts = 5
+	maxRetryAttempts = 1
 	tgChatID = -503582013
 )
+
+//staging
+// const (
+// 	concurrentUploads = false
+// 	postTo = "http://localhost:1633/bytes"
+// 	getTagStatusTemplate = "http://localhost:1633/tags/%s"
+// 	promGateway = ""
+// 	postType = "application/octet-stream"
+// 	tmpFolder = "tmp"
+// 	getFromTemplate = "https://bee-%d.gateway.staging.ethswarm.org/bytes/%s"
+// 	maxNode = 19 //presuming they start at 0
+// 	postSize = 1000 * 1000 * 0.1
+// 	maxAttemptsAfterSent = 10	
+// 	batchSize =  100
+// 	getTestTimoutSecs = 100
+// 	timeBeforeGetSecs = 60
+// 	timeBetweenGetSecs = 2
+// 	sleepBetweenBatchMs = 300
+// 	sleepBetweenRetryMs = 10000
+// 	maxRetryAttempts = 5
+// 	tgChatID = -503582013
+// )
 
 var (
 	tgAPI = os.Getenv("TG_API")
@@ -328,6 +330,7 @@ func testRun(mmtx sync.Mutex, i int, resultsChannel chan []TestResult, retryChan
 	for i := 0; i <= maxNode; i++ {
 		go func(i int) {
 			_, r := getTest(mmtx, ref, i)
+			time.Sleep(timeBetweenGetSecs * time.Second)
 			resultChannel <- r
 		}(i)
 	}
