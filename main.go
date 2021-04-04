@@ -31,9 +31,10 @@ const (
 	tmpFolder = "tmp"
 	getFromTemplate = "https://bee-%d.gateway.ethswarm.org/bytes/%s"
 	maxNode = 9 //presuming they start at 0
-	postSize = 1 * 1000 * 1000 * 10
-	maxAttemptsAfterSent = 200	
-	batchSize =  100
+	postSize = 1 * 1000 * 1000 * 1
+	// postSize = 1000
+	maxAttemptsAfterSent = 50	
+	batchSize =  1000
 	getTestTimoutSecs = 100
 	timeBeforeGetSecs = 60
 	timeBetweenGetSecs = 2
