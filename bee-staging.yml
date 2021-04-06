@@ -27,7 +27,7 @@ resolver-options:
 - https://mainnet.infura.io/v3/ea1c46ad11f2473b92bfeca7f4ee53d2
 standalone: false
 swap-enable: true
-swap-endpoint: https://goerli.infura.io/v3/ea1c46ad11f2473b92bfeca7f4ee53d2
+swap-endpoint: https://rpc.slock.it/goerli
 swap-factory-address: ""
 swap-initial-deposit: "100000000"
 tracing-enable: false
