@@ -31,10 +31,10 @@ const (
 	tmpFolder = "tmp"
 	getFromTemplate = "https://bee-%d.gateway.ethswarm.org/bytes/%s"
 	maxNode = 9 //presuming they start at 0
-	postSize = 1 * 1000 * 1000 * 1
+	postSize = 1 * 1000 * 1000 * 1000
 	// postSize = 1000
-	maxAttemptsAfterSent = 50	
-	batchSize =  1000
+	maxAttemptsAfterSent = 10	
+	batchSize =  5
 	getTestTimoutSecs = 100
 	timeBeforeGetSecs = 60
 	timeBetweenGetSecs = 2
@@ -214,7 +214,8 @@ func postTest(mmtx sync.Mutex, i int, size int64) string {
 
 		var tr TagResponse
 		json.Unmarshal(body, &tr)
-		fmt.Println("syncing", tr.Synced, tr.Total, r.Reference, i, tr, attemptAfterSent)
+		timeSinceStarted := time.Since(start).Seconds()
+		fmt.Println("syncing", tr.Synced, tr.Total, r.Reference, i, tr, attemptAfterSent, timeSinceStarted)
 
 		//just waiting for sent not sync
 		if tr.Synced >= tr.Total {
